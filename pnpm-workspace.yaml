@@ -2,6 +2,9 @@ packages:
   - "apps/*"
   - "packages/*"
 
+# Expo/Metro resolves native modules more reliably with a hoisted layout.
+nodeLinker: hoisted
+
 # Dependencies allowed to run install scripts.
 allowBuilds:
   esbuild: true
