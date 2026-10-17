@@ -1,0 +1,12 @@
+import { Global, Module } from "@nestjs/common";
+import { parseEnv, type Env } from "./env";
+
+export const ENV = Symbol("ENV");
+
+/** Provides the validated environment under the `ENV` token. */
+@Global()
+@Module({
+  providers: [{ provide: ENV, useFactory: (): Env => parseEnv() }],
+  exports: [ENV],
+})
+export class ConfigModule {}
