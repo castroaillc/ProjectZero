@@ -14,13 +14,13 @@ const PORT_KEYS = ["API_PORT", "WEB_PORT", "DOCS_PORT", "DESKTOP_RENDERER_PORT"]
 const OFFSET_STEP = 10;
 
 function run(cmd: string, args: string[], opts: ExecFileSyncOptions = {}): string {
-  return execFileSync(cmd, args, {
+  // stdout is null when the caller inherits stdio.
+  const out = execFileSync(cmd, args, {
     encoding: "utf8",
     stdio: ["ignore", "pipe", "inherit"],
     ...opts,
-  })
-    .toString()
-    .trim();
+  });
+  return (out ?? "").toString().trim();
 }
 
 const mainRoot = dirname(run("git", ["rev-parse", "--path-format=absolute", "--git-common-dir"]));
