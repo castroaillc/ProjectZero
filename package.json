@@ -1,0 +1,36 @@
+{
+  "name": "projectzero",
+  "private": true,
+  "packageManager": "pnpm@12.11.2",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "format": "prettier --write .",
+    "db:migrate": "turbo run db:migrate",
+    "db:seed": "turbo run db:seed",
+    "wt": "tsx scripts/wt.ts",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "21.2.3",
+    "@commitlint/config-conventional": "21.2.3",
+    "@commitlint/config-pnpm-scopes": "21.2.2",
+    "@commitlint/types": "21.2.3",
+    "@types/node": "26.6.5",
+    "husky": "9.1.7",
+    "lint-staged": "17.6.0",
+    "prettier": "3.9.10",
+    "tsx": "4.23.15",
+    "turbo": "2.11.9",
+    "typescript": "~6.0.3"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,mjs,cjs,json,md,mdx,yml,yaml,css}": "prettier --write --ignore-unknown"
+  }
+}
