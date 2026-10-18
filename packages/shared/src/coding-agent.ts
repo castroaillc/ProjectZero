@@ -1,8 +1,9 @@
 import { z } from "zod";
 
-// A coding agent is a saved configuration: which model it runs on, the Docker sandbox it works
-// in, which built-in tools it may use, the MCP servers it can reach and the skills it can load.
-// Running one is a separate step; these schemas only describe and validate the configuration.
+// A coding agent is a saved configuration: its identity, which model it runs on, the Docker
+// sandbox it works in, which built-in tools it may use, the MCP servers it can reach and the
+// skills it can load. Running one is a separate step; these schemas only describe and validate
+// the configuration.
 
 /** Lowercase identifier used for MCP server and skill names (also how the model refers to them). */
 const slug = z
@@ -101,6 +102,40 @@ export const SandboxConfigSchema = z
   })
   .describe("The Docker container the agent's tools run in.");
 
+export const DEFAULT_AGENT_IDENTITY = {
+  avatar: "🤖",
+  role: "",
+  git: { name: "ProjectZero Agent", email: "agent@projectzero.local" },
+};
+
+export const AgentIdentitySchema = z
+  .object({
+    avatar: z
+      .string()
+      .trim()
+      .min(1)
+      .max(16)
+      .describe("Emoji shown next to the agent's messages.")
+      .default(DEFAULT_AGENT_IDENTITY.avatar),
+    role: z
+      .string()
+      .trim()
+      .max(200)
+      .describe("Who the agent is, e.g. 'Senior TypeScript engineer'. Opens its system prompt.")
+      .default(DEFAULT_AGENT_IDENTITY.role),
+    git: z
+      .object({
+        name: z.string().trim().min(1).max(100).describe("Commit author name."),
+        email: z.email().describe("Commit author email."),
+        tokenEnv: envName
+          .optional()
+          .describe("Server env var with a token for pushing (e.g. a GitHub PAT). Never stored."),
+      })
+      .describe("Who the agent's commits are attributed to inside the sandbox.")
+      .default(DEFAULT_AGENT_IDENTITY.git),
+  })
+  .describe("How the agent presents itself and who its work is attributed to.");
+
 /** Tools the harness provides; all of them act inside the sandbox. */
 export const BUILTIN_TOOLS = {
   bash: "Run a shell command in the workdir.",
@@ -181,6 +216,7 @@ const configFields = {
     .max(20_000)
     .describe("Extra instructions appended to the harness's base prompt.")
     .default(""),
+  identity: AgentIdentitySchema.default(DEFAULT_AGENT_IDENTITY),
   model: ModelConfigSchema,
   sandbox: SandboxConfigSchema,
   tools: z
@@ -222,7 +258,7 @@ export const CodingAgentSchema = z
     createdAt: z.iso.datetime().describe("When the agent was created (ISO 8601)."),
     updatedAt: z.iso.datetime().describe("When the agent was last changed (ISO 8601)."),
   })
-  .describe("A coding agent: model, sandbox, tools, MCP servers and skills.");
+  .describe("A coding agent: identity, model, sandbox, tools, MCP servers and skills.");
 
 export const CreateCodingAgentSchema = z
   .object(configFields)
@@ -234,6 +270,7 @@ export const UpdateCodingAgentSchema = z
   .describe("Fields to change on a coding agent; each replaces the stored value as a whole.");
 
 export type ModelProvider = (typeof MODEL_PROVIDERS)[number];
+export type AgentIdentity = z.infer<typeof AgentIdentitySchema>;
 export type ModelConfig = z.infer<typeof ModelConfigSchema>;
 export type SandboxConfig = z.infer<typeof SandboxConfigSchema>;
 export type ToolConfig = z.infer<typeof ToolConfigSchema>;
