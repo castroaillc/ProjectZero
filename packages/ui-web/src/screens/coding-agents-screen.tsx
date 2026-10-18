@@ -2,14 +2,17 @@ import {
   ApiError,
   BUILTIN_TOOLS,
   CreateCodingAgentSchema,
-  DEFAULT_AGENT_IDENTITY,
+  DEFAULT_AGENT_PERSONA,
+  requiredCredentials,
   getListCodingAgentsQueryKey,
   MODEL_PROVIDERS,
   useCreateCodingAgent,
   useDeleteCodingAgent,
   useListCodingAgents,
+  useListCredentials,
   useUpdateCodingAgent,
   type AgentIdentity,
+  type AgentPersona,
   type BuiltinToolName,
   type CodingAgentDtoOutput,
   type CreateCodingAgent,
@@ -20,7 +23,7 @@ import {
   type Skill,
 } from "@projectzero/api-client";
 import { useQueryClient } from "@tanstack/react-query";
-import { Bot, Plus, Trash2, X } from "lucide-react";
+import { Bot, Check, CircleAlert, KeyRound, Plus, Trash2, User, X } from "lucide-react";
 import { useState, type FormEvent, type ReactNode } from "react";
 import { cn } from "../cn";
 import { Button } from "../components/button";
@@ -29,26 +32,45 @@ import { Field } from "../components/field";
 import { Input } from "../components/input";
 import { Select } from "../components/select";
 import { Textarea } from "../components/textarea";
+import { CredentialsPanel } from "./credentials-panel";
 
 export interface CodingAgentsScreenProps {
   /** Links or buttons shown in the header, e.g. to get back to the todo list. */
   nav?: ReactNode;
 }
 
-const MODEL_DEFAULTS: Record<ModelProvider, { model: string; apiKeyEnv?: string }> = {
+const MODEL_DEFAULTS: Record<ModelProvider, { model: string; apiKeyCredential?: string }> = {
   ollama: { model: "gpt-oss:20b" },
-  anthropic: { model: "claude-sonnet-5-5", apiKeyEnv: "ANTHROPIC_API_KEY" },
-  openai: { model: "gpt-5", apiKeyEnv: "OPENAI_API_KEY" },
+  anthropic: { model: "claude-sonnet-5-5", apiKeyCredential: "ANTHROPIC_API_KEY" },
+  openai: { model: "gpt-5", apiKeyCredential: "OPENAI_API_KEY" },
 };
 
 const TOOL_NAMES = Object.keys(BUILTIN_TOOLS) as BuiltinToolName[];
 
-function newDraft(): CreateCodingAgent {
+/** The form's state: like a create body, except identity starts unchosen. */
+type Draft = Omit<CreateCodingAgent, "identity"> & { identity?: AgentIdentity };
+
+const IDENTITY_OPTIONS = [
+  {
+    value: "assistant",
+    title: "A person's assistant",
+    body: "Works for whoever is chatting with it, with their credentials. Each person connects their own accounts the first time.",
+    icon: User,
+  },
+  {
+    value: "autonomous",
+    title: "Runs on its own",
+    body: "Acts with credentials you connect, the same for every run. Needed for scheduled and triggered work.",
+    icon: Bot,
+  },
+] as const satisfies { value: AgentIdentity; title: string; body: string; icon: unknown }[];
+
+function newDraft(): Draft {
   return {
     name: "",
     description: "",
     systemPrompt: "",
-    identity: DEFAULT_AGENT_IDENTITY,
+    persona: DEFAULT_AGENT_PERSONA,
     model: { provider: "ollama", model: MODEL_DEFAULTS.ollama.model },
     sandbox: {
       image: "node:24-bookworm",
@@ -66,8 +88,14 @@ function newDraft(): CreateCodingAgent {
   };
 }
 
-function toDraft({ id: _id, createdAt: _c, updatedAt: _u, ...agent }: CodingAgentDtoOutput) {
-  return agent as CreateCodingAgent;
+function toDraft({
+  id: _id,
+  createdAt: _c,
+  updatedAt: _u,
+  requiredCredentials: _r,
+  ...agent
+}: CodingAgentDtoOutput) {
+  return agent as Draft;
 }
 
 const optional = (s: string) => s.trim() || undefined;
@@ -181,22 +209,21 @@ function AgentEditor({
   const update = useUpdateCodingAgent();
   const remove = useDeleteCodingAgent();
 
-  const [draft, setDraft] = useState<CreateCodingAgent>(() =>
-    agent ? toDraft(agent) : newDraft(),
-  );
+  const credentials = useListCredentials();
+  const [draft, setDraft] = useState<Draft>(() => (agent ? toDraft(agent) : newDraft()));
   const [issues, setIssues] = useState<Issue[]>([]);
   const [saved, setSaved] = useState(false);
   const mcpKeys = useListKeys(draft.mcpServers.length);
   const skillKeys = useListKeys(draft.skills.length);
 
-  const set = <K extends keyof CreateCodingAgent>(key: K, value: CreateCodingAgent[K]) => {
+  const set = <K extends keyof Draft>(key: K, value: Draft[K]) => {
     setSaved(false);
     setDraft((d) => ({ ...d, [key]: value }));
   };
-  const setIdentity = (patch: Partial<AgentIdentity>) =>
-    set("identity", { ...draft.identity, ...patch });
-  const setGit = (patch: Partial<AgentIdentity["git"]>) =>
-    setIdentity({ git: { ...draft.identity.git, ...patch } });
+  const setPersona = (patch: Partial<AgentPersona>) =>
+    set("persona", { ...draft.persona, ...patch });
+  const setGit = (patch: Partial<AgentPersona["git"]>) =>
+    setPersona({ git: { ...draft.persona.git, ...patch } });
   const setModel = (patch: Partial<ModelConfig>) => set("model", { ...draft.model, ...patch });
   const setSandbox = (patch: Partial<SandboxConfig>) =>
     set("sandbox", { ...draft.sandbox, ...patch });
@@ -243,10 +270,55 @@ function AgentEditor({
   }
 
   const pending = create.isPending || update.isPending;
+  const connected = new Set((credentials.data ?? []).map((c) => c.name));
+  const needed = requiredCredentials(draft);
 
   return (
     <Card className="p-6">
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+        <datalist id="credential-names">
+          {(credentials.data ?? []).map((c) => (
+            <option key={c.id} value={c.name} />
+          ))}
+        </datalist>
+
+        <Section
+          title="How will this agent work?"
+          hint={
+            agent
+              ? "Fixed when the agent was created."
+              : "This decides whose accounts its actions use, and can't be changed later."
+          }
+        >
+          <div role="radiogroup" aria-label="Identity" className="grid gap-3 sm:grid-cols-2">
+            {IDENTITY_OPTIONS.map(({ value, title, body, icon: Icon }) => {
+              const checked = draft.identity === value;
+              return (
+                <button
+                  key={value}
+                  type="button"
+                  role="radio"
+                  aria-checked={checked}
+                  disabled={!!agent && !checked}
+                  onClick={() => !agent && set("identity", value)}
+                  className={cn(
+                    "flex gap-3 rounded-lg border p-4 text-left transition",
+                    checked ? "border-accent bg-accent/10" : "border-border hover:border-accent",
+                    agent && "cursor-default",
+                    "disabled:opacity-40 disabled:hover:border-border",
+                  )}
+                >
+                  <Icon className="mt-0.5 size-5 shrink-0 text-accent" aria-hidden />
+                  <span>
+                    <span className="block text-sm font-medium">{title}</span>
+                    <span className="block text-xs text-muted">{body}</span>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </Section>
+
         <Section title="Agent">
           <Field label="Name">
             <Input
@@ -276,22 +348,22 @@ function AgentEditor({
         </Section>
 
         <Section
-          title="Identity"
-          hint="Who the agent is, and who its commits in the sandbox are attributed to."
+          title="Persona"
+          hint="How the agent presents itself, and who its commits in the sandbox are attributed to."
         >
           <div className="grid gap-4 sm:grid-cols-[6rem_1fr]">
             <Field label="Avatar">
               <Input
-                value={draft.identity.avatar}
-                onChange={(e) => setIdentity({ avatar: e.target.value })}
+                value={draft.persona.avatar}
+                onChange={(e) => setPersona({ avatar: e.target.value })}
                 maxLength={16}
                 className="text-center text-lg"
               />
             </Field>
             <Field label="Role">
               <Input
-                value={draft.identity.role}
-                onChange={(e) => setIdentity({ role: e.target.value })}
+                value={draft.persona.role}
+                onChange={(e) => setPersona({ role: e.target.value })}
                 placeholder="e.g. Senior TypeScript engineer"
                 maxLength={200}
               />
@@ -300,21 +372,22 @@ function AgentEditor({
           <div className="grid gap-4 sm:grid-cols-3">
             <Field label="Git author name">
               <Input
-                value={draft.identity.git.name}
+                value={draft.persona.git.name}
                 onChange={(e) => setGit({ name: e.target.value })}
               />
             </Field>
             <Field label="Git author email">
               <Input
                 type="email"
-                value={draft.identity.git.email}
+                value={draft.persona.git.email}
                 onChange={(e) => setGit({ email: e.target.value })}
               />
             </Field>
-            <Field label="Push token env var (optional)">
+            <Field label="Push token credential (optional)">
               <Input
-                value={draft.identity.git.tokenEnv ?? ""}
-                onChange={(e) => setGit({ tokenEnv: optional(e.target.value) })}
+                list="credential-names"
+                value={draft.persona.git.tokenCredential ?? ""}
+                onChange={(e) => setGit({ tokenCredential: optional(e.target.value) })}
                 placeholder="GITHUB_TOKEN"
                 className="font-mono"
               />
@@ -356,10 +429,11 @@ function AgentEditor({
               />
             </Field>
             {draft.model.provider !== "ollama" && (
-              <Field label="API key env var">
+              <Field label="API key credential">
                 <Input
-                  value={draft.model.apiKeyEnv ?? ""}
-                  onChange={(e) => setModel({ apiKeyEnv: optional(e.target.value) })}
+                  list="credential-names"
+                  value={draft.model.apiKeyCredential ?? ""}
+                  onChange={(e) => setModel({ apiKeyCredential: optional(e.target.value) })}
                   className="font-mono"
                 />
               </Field>
@@ -383,11 +457,6 @@ function AgentEditor({
               />
             </Field>
           </div>
-          {draft.model.provider !== "ollama" && (
-            <p className="text-xs text-muted">
-              Only the env var's name is saved. Set the key itself on the API server.
-            </p>
-          )}
         </Section>
 
         <Section title="Sandbox" hint="The Docker container the agent's tools run in.">
@@ -476,7 +545,7 @@ function AgentEditor({
             placeholder={"corepack enable\npnpm install"}
           />
           <TextField
-            label="Environment (KEY=value per line; ${NAME} reads a server secret)"
+            label="Environment (KEY=value per line; ${NAME} inserts a credential)"
             value={draft.sandbox.env}
             onChange={(env) => setSandbox({ env })}
             codec={keyValues}
@@ -732,6 +801,35 @@ function AgentEditor({
           </Button>
         </Section>
 
+        <Section
+          title="Credentials"
+          hint={
+            draft.identity === "assistant"
+              ? "Each person who chats with this agent connects their own. Yours are checked below."
+              : "Runs use these from your credentials."
+          }
+        >
+          {needed.length === 0 ? (
+            <p className="text-sm text-muted">This config doesn't use any credentials.</p>
+          ) : (
+            <ul className="flex flex-col gap-1.5">
+              {needed.map((name) => (
+                <li key={name} className="flex items-center gap-2 text-sm">
+                  {connected.has(name) ? (
+                    <Check className="size-4 text-accent" aria-hidden />
+                  ) : (
+                    <CircleAlert className="size-4 text-danger" aria-hidden />
+                  )}
+                  <span className="font-mono">{name}</span>
+                  <span className="text-muted">
+                    {connected.has(name) ? "connected" : "not in your credentials yet"}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Section>
+
         {issues.length > 0 && (
           <ul role="alert" className="flex flex-col gap-1 text-sm text-danger">
             {issues.map((issue, i) => (
@@ -770,9 +868,9 @@ function AgentEditor({
 /** Lists the user's coding agents and edits one at a time. Shared by web and desktop. */
 export function CodingAgentsScreen({ nav }: CodingAgentsScreenProps) {
   const agents = useListCodingAgents();
-  const [selected, setSelected] = useState<string | "new" | null>(null);
+  const [selected, setSelected] = useState<string | "new" | "credentials" | null>(null);
   const items = agents.data ?? [];
-  const current = selected === "new" ? null : (items.find((a) => a.id === selected) ?? null);
+  const current = items.find((a) => a.id === selected) ?? null;
   const editing = selected === "new" || current !== null;
 
   return (
@@ -781,7 +879,7 @@ export function CodingAgentsScreen({ nav }: CodingAgentsScreenProps) {
         <div>
           <h1 className="text-2xl font-semibold">Coding agents</h1>
           <p className="text-sm text-muted">
-            Identity, model, sandbox, tools, MCP servers and skills.
+            Identity, persona, model, sandbox, tools, MCP servers and skills.
           </p>
         </div>
         {nav}
@@ -816,20 +914,32 @@ export function CodingAgentsScreen({ nav }: CodingAgentsScreenProps) {
                 >
                   <span className="font-medium">
                     <span aria-hidden className="mr-1.5">
-                      {agent.identity.avatar}
+                      {agent.persona.avatar}
                     </span>
                     {agent.name}
                   </span>
                   <span className="truncate text-xs text-muted">
-                    {agent.model.provider} · {agent.model.model}
+                    {agent.identity === "assistant" ? "Assistant" : "Autonomous"} ·{" "}
+                    {agent.model.model}
                   </span>
                 </button>
               </li>
             ))}
           </ul>
+          <div className="mt-1 border-t border-border pt-1">
+            <Button
+              variant={selected === "credentials" ? "primary" : "ghost"}
+              className="w-full justify-start"
+              onClick={() => setSelected("credentials")}
+            >
+              <KeyRound className="size-4" aria-hidden /> Credentials
+            </Button>
+          </div>
         </Card>
 
-        {editing ? (
+        {selected === "credentials" ? (
+          <CredentialsPanel />
+        ) : editing ? (
           <AgentEditor
             key={selected}
             agent={current}
