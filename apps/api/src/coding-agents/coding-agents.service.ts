@@ -7,6 +7,7 @@ import {
 } from "@nestjs/common";
 import { codingAgents, type CodingAgentRow, type Db } from "@projectzero/db";
 import {
+  findAgentTemplate,
   requiredCredentials,
   type CodingAgent,
   type CreateCodingAgent,
@@ -20,6 +21,7 @@ function toCodingAgent({ userId: _userId, ...row }: CodingAgentRow): CodingAgent
   return {
     ...row,
     requiredCredentials: requiredCredentials(row),
+    templateId: row.templateId ?? undefined,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
@@ -49,6 +51,8 @@ export class CodingAgentsService {
   }
 
   async create(userId: string, input: CreateCodingAgent): Promise<CodingAgent> {
+    if (input.templateId && !findAgentTemplate(input.templateId))
+      throw new BadRequestException(`Unknown agent template "${input.templateId}"`);
     const [row] = await this.write(input.name, () =>
       this.db
         .insert(codingAgents)

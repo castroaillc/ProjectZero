@@ -53,4 +53,11 @@ export interface CreateCodingAgentDto {
    * @maxItems 50
    */
   skills?: CreateCodingAgentDtoSkillsItem[];
+  /**
+   * Template this agent starts from, if any.
+   * @minLength 1
+   * @maxLength 64
+   * @pattern ^[a-z0-9][a-z0-9_-]*$
+   */
+  templateId?: string;
 }

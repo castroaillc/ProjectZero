@@ -6,6 +6,23 @@
  * OpenAPI spec version: 1
  */
 
+export * from "./agentTemplateDtoOutput";
+export * from "./agentTemplateDtoOutputConfig";
+export * from "./agentTemplateDtoOutputConfigMcpServersItem";
+export * from "./agentTemplateDtoOutputConfigModel";
+export * from "./agentTemplateDtoOutputConfigModelProvider";
+export * from "./agentTemplateDtoOutputConfigPersona";
+export * from "./agentTemplateDtoOutputConfigPersonaGit";
+export * from "./agentTemplateDtoOutputConfigSandbox";
+export * from "./agentTemplateDtoOutputConfigSandboxEnv";
+export * from "./agentTemplateDtoOutputConfigSandboxNetwork";
+export * from "./agentTemplateDtoOutputConfigSandboxRepo";
+export * from "./agentTemplateDtoOutputConfigSkillsItem";
+export * from "./agentTemplateDtoOutputConfigToolsItem";
+export * from "./agentTemplateDtoOutputConfigToolsItemApproval";
+export * from "./agentTemplateDtoOutputConfigToolsItemName";
+export * from "./agentTemplateDtoOutputCredentialsItem";
+export * from "./agentTemplateDtoOutputRecommendedIdentity";
 export * from "./agentThreadDtoOutput";
 export * from "./agentThreadStateDtoOutput";
 export * from "./agentThreadStateDtoOutputMessagesItem";

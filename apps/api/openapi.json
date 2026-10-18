@@ -976,6 +976,87 @@
         ]
       }
     },
+    "/v1/agent-templates": {
+      "get": {
+        "operationId": "listAgentTemplates",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AgentTemplateDto_Output"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session."
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the pre-configured agents users can start from.",
+        "tags": [
+          "agent-templates"
+        ]
+      }
+    },
+    "/v1/agent-templates/{id}": {
+      "get": {
+        "operationId": "getAgentTemplate",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentTemplateDto_Output"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session."
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get one agent template.",
+        "tags": [
+          "agent-templates"
+        ]
+      }
+    },
     "/api/auth/sign-in/social": {
       "post": {
         "tags": [
@@ -7003,6 +7084,17 @@
                         "ask"
                       ]
                     },
+                    "autoApprove": {
+                      "default": [],
+                      "description": "Tools (by their name on the server) that skip approval even when it's `ask`.",
+                      "maxItems": 200,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 200
+                      }
+                    },
                     "transport": {
                       "type": "string",
                       "const": "stdio",
@@ -7041,6 +7133,7 @@
                   "required": [
                     "name",
                     "approval",
+                    "autoApprove",
                     "transport",
                     "command",
                     "args",
@@ -7066,6 +7159,17 @@
                         "auto",
                         "ask"
                       ]
+                    },
+                    "autoApprove": {
+                      "default": [],
+                      "description": "Tools (by their name on the server) that skip approval even when it's `ask`.",
+                      "maxItems": 200,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 200
+                      }
                     },
                     "transport": {
                       "type": "string",
@@ -7095,6 +7199,7 @@
                   "required": [
                     "name",
                     "approval",
+                    "autoApprove",
                     "transport",
                     "url",
                     "headers"
@@ -7152,6 +7257,10 @@
               "pattern": "^[A-Z][A-Z0-9_]*$"
             },
             "description": "Credentials the agent's config refers to; a run needs all of them."
+          },
+          "templateId": {
+            "type": "string",
+            "description": "Template the agent was created from, if any. Kept for provenance only."
           },
           "createdAt": {
             "type": "string",
@@ -7504,6 +7613,17 @@
                         "ask"
                       ]
                     },
+                    "autoApprove": {
+                      "default": [],
+                      "description": "Tools (by their name on the server) that skip approval even when it's `ask`.",
+                      "maxItems": 200,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 200
+                      }
+                    },
                     "transport": {
                       "type": "string",
                       "const": "stdio",
@@ -7563,6 +7683,17 @@
                         "auto",
                         "ask"
                       ]
+                    },
+                    "autoApprove": {
+                      "default": [],
+                      "description": "Tools (by their name on the server) that skip approval even when it's `ask`.",
+                      "maxItems": 200,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 200
+                      }
                     },
                     "transport": {
                       "type": "string",
@@ -7635,6 +7766,13 @@
               "description": "Instructions the agent loads when a task calls for them."
             },
             "description": "Skills the agent can load."
+          },
+          "templateId": {
+            "description": "Template this agent starts from, if any.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^[a-z0-9][a-z0-9_-]*$"
           }
         },
         "required": [
@@ -7927,6 +8065,17 @@
                         "ask"
                       ]
                     },
+                    "autoApprove": {
+                      "default": [],
+                      "description": "Tools (by their name on the server) that skip approval even when it's `ask`.",
+                      "maxItems": 200,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 200
+                      }
+                    },
                     "transport": {
                       "type": "string",
                       "const": "stdio",
@@ -7986,6 +8135,17 @@
                         "auto",
                         "ask"
                       ]
+                    },
+                    "autoApprove": {
+                      "default": [],
+                      "description": "Tools (by their name on the server) that skip approval even when it's `ask`.",
+                      "maxItems": 200,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 200
+                      }
                     },
                     "transport": {
                       "type": "string",
@@ -8154,6 +8314,585 @@
           }
         },
         "description": "Replace a credential's value or description."
+      },
+      "AgentTemplateDto_Output": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Stable template ID; saved on agents created from it."
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name."
+          },
+          "summary": {
+            "type": "string",
+            "description": "One line on what the agent does."
+          },
+          "description": {
+            "type": "string",
+            "description": "Plain text: what it does and how to set it up. Lines starting with - are bullets."
+          },
+          "recommendedIdentity": {
+            "type": "string",
+            "enum": [
+              "assistant",
+              "autonomous"
+            ],
+            "description": "The identity that usually fits."
+          },
+          "identityHint": {
+            "type": "string",
+            "description": "When to pick each identity for this template."
+          },
+          "credentials": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64,
+                  "pattern": "^[A-Z][A-Z0-9_]*$",
+                  "description": "Credential the config refers to."
+                },
+                "description": {
+                  "type": "string",
+                  "description": "What to create and which permissions it needs."
+                }
+              },
+              "required": [
+                "name",
+                "description"
+              ],
+              "additionalProperties": false
+            },
+            "description": "Credentials to add before the agent can run."
+          },
+          "config": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100,
+                "description": "Display name, unique per user."
+              },
+              "description": {
+                "default": "",
+                "type": "string",
+                "maxLength": 500,
+                "description": "What this agent is for."
+              },
+              "systemPrompt": {
+                "default": "",
+                "type": "string",
+                "maxLength": 20000,
+                "description": "Extra instructions appended to the harness's base prompt."
+              },
+              "persona": {
+                "default": {
+                  "avatar": "🤖",
+                  "role": "",
+                  "git": {
+                    "name": "ProjectZero Agent",
+                    "email": "agent@projectzero.local"
+                  }
+                },
+                "type": "object",
+                "properties": {
+                  "avatar": {
+                    "default": "🤖",
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 16,
+                    "description": "Emoji shown next to the agent's messages."
+                  },
+                  "role": {
+                    "default": "",
+                    "type": "string",
+                    "maxLength": 200,
+                    "description": "Who the agent is, e.g. 'Senior TypeScript engineer'. Opens its system prompt."
+                  },
+                  "git": {
+                    "default": {
+                      "name": "ProjectZero Agent",
+                      "email": "agent@projectzero.local"
+                    },
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 100,
+                        "description": "Commit author name."
+                      },
+                      "email": {
+                        "type": "string",
+                        "format": "email",
+                        "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$",
+                        "description": "Commit author email."
+                      },
+                      "tokenCredential": {
+                        "description": "Credential with a token for pushing, e.g. a GitHub PAT.",
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 64,
+                        "pattern": "^[A-Z][A-Z0-9_]*$"
+                      }
+                    },
+                    "required": [
+                      "name",
+                      "email"
+                    ],
+                    "additionalProperties": false,
+                    "description": "Who the agent's commits are attributed to inside the sandbox."
+                  }
+                },
+                "required": [
+                  "avatar",
+                  "role",
+                  "git"
+                ],
+                "additionalProperties": false,
+                "description": "How the agent presents itself and who its commits are attributed to."
+              },
+              "model": {
+                "type": "object",
+                "properties": {
+                  "provider": {
+                    "type": "string",
+                    "enum": [
+                      "ollama",
+                      "anthropic",
+                      "openai"
+                    ],
+                    "description": "Who serves the model."
+                  },
+                  "model": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
+                    "description": "Model ID or Ollama tag, e.g. gpt-oss:20b."
+                  },
+                  "baseUrl": {
+                    "description": "Server URL. Ollama defaults to the API's OLLAMA_BASE_URL; others to the vendor.",
+                    "type": "string",
+                    "format": "uri"
+                  },
+                  "apiKeyCredential": {
+                    "description": "Name of the credential holding the API key.",
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64,
+                    "pattern": "^[A-Z][A-Z0-9_]*$"
+                  },
+                  "temperature": {
+                    "description": "Sampling temperature.",
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 2
+                  },
+                  "maxTokens": {
+                    "description": "Max output tokens per turn.",
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 200000
+                  }
+                },
+                "required": [
+                  "provider",
+                  "model"
+                ],
+                "additionalProperties": false,
+                "description": "The chat model the agent runs on. It must support tool calling."
+              },
+              "sandbox": {
+                "type": "object",
+                "properties": {
+                  "image": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 255,
+                    "pattern": "^[\\w][\\w.\\-/:@]*$",
+                    "description": "Docker image the sandbox container starts from."
+                  },
+                  "workdir": {
+                    "default": "/workspace",
+                    "description": "Working directory inside the container; the repo is cloned here.",
+                    "type": "string",
+                    "pattern": "^\\/[^\\0]*$"
+                  },
+                  "repo": {
+                    "description": "Repository to clone into the workdir before the agent starts.",
+                    "type": "object",
+                    "properties": {
+                      "url": {
+                        "type": "string",
+                        "format": "uri",
+                        "description": "Git URL to clone."
+                      },
+                      "ref": {
+                        "description": "Branch, tag or commit to check out.",
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 255
+                      }
+                    },
+                    "required": [
+                      "url"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "setupCommands": {
+                    "default": [],
+                    "description": "Shell commands run in the workdir after cloning, e.g. `pnpm install`.",
+                    "maxItems": 20,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 2000
+                    }
+                  },
+                  "network": {
+                    "default": "bridge",
+                    "description": "`none` cuts the container off from the network; `bridge` allows outbound.",
+                    "type": "string",
+                    "enum": [
+                      "none",
+                      "bridge"
+                    ]
+                  },
+                  "cpus": {
+                    "default": 2,
+                    "description": "CPU limit.",
+                    "type": "number",
+                    "minimum": 0.25,
+                    "maximum": 16
+                  },
+                  "memoryMb": {
+                    "default": 4096,
+                    "description": "Memory limit in MiB.",
+                    "type": "integer",
+                    "minimum": 256,
+                    "maximum": 65536
+                  },
+                  "timeoutSeconds": {
+                    "default": 3600,
+                    "description": "The container is stopped after this long.",
+                    "type": "integer",
+                    "minimum": 60,
+                    "maximum": 86400
+                  },
+                  "env": {
+                    "default": {},
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string",
+                      "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+                    },
+                    "additionalProperties": {
+                      "type": "string",
+                      "maxLength": 4000
+                    },
+                    "description": "Environment variables. Use `${NAME}` to insert a credential instead of a secret."
+                  }
+                },
+                "required": [
+                  "image",
+                  "workdir",
+                  "setupCommands",
+                  "network",
+                  "cpus",
+                  "memoryMb",
+                  "timeoutSeconds",
+                  "env"
+                ],
+                "additionalProperties": false,
+                "description": "The Docker container the agent's tools run in."
+              },
+              "tools": {
+                "default": [
+                  {
+                    "name": "bash",
+                    "approval": "auto"
+                  },
+                  {
+                    "name": "read_file",
+                    "approval": "auto"
+                  },
+                  {
+                    "name": "write_file",
+                    "approval": "auto"
+                  },
+                  {
+                    "name": "edit_file",
+                    "approval": "auto"
+                  },
+                  {
+                    "name": "list_files",
+                    "approval": "auto"
+                  },
+                  {
+                    "name": "grep",
+                    "approval": "auto"
+                  }
+                ],
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "enum": [
+                        "bash",
+                        "read_file",
+                        "write_file",
+                        "edit_file",
+                        "list_files",
+                        "grep"
+                      ],
+                      "description": "Built-in tool."
+                    },
+                    "approval": {
+                      "default": "auto",
+                      "description": "`ask` pauses the run for the user's approval before each call.",
+                      "type": "string",
+                      "enum": [
+                        "auto",
+                        "ask"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "approval"
+                  ],
+                  "additionalProperties": false,
+                  "description": "A built-in tool the agent may use."
+                },
+                "description": "Built-in tools the agent may use. Defaults to all of them."
+              },
+              "mcpServers": {
+                "default": [],
+                "maxItems": 20,
+                "type": "array",
+                "items": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64,
+                          "pattern": "^[a-z0-9][a-z0-9_-]*$",
+                          "description": "Server name; tools are exposed to the model as <name>__<tool>."
+                        },
+                        "approval": {
+                          "default": "ask",
+                          "description": "`ask` pauses the run for approval before each of this server's tool calls.",
+                          "type": "string",
+                          "enum": [
+                            "auto",
+                            "ask"
+                          ]
+                        },
+                        "autoApprove": {
+                          "default": [],
+                          "description": "Tools (by their name on the server) that skip approval even when it's `ask`.",
+                          "maxItems": 200,
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 200
+                          }
+                        },
+                        "transport": {
+                          "type": "string",
+                          "const": "stdio",
+                          "description": "Started as a process inside the sandbox."
+                        },
+                        "command": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 500,
+                          "description": "Executable, e.g. npx."
+                        },
+                        "args": {
+                          "default": [],
+                          "description": "Arguments.",
+                          "maxItems": 50,
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "maxLength": 2000
+                          }
+                        },
+                        "env": {
+                          "default": {},
+                          "type": "object",
+                          "propertyNames": {
+                            "type": "string",
+                            "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+                          },
+                          "additionalProperties": {
+                            "type": "string",
+                            "maxLength": 4000
+                          },
+                          "description": "Environment variables. Use `${NAME}` to insert a credential instead of a secret."
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "approval",
+                        "autoApprove",
+                        "transport",
+                        "command",
+                        "args",
+                        "env"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64,
+                          "pattern": "^[a-z0-9][a-z0-9_-]*$",
+                          "description": "Server name; tools are exposed to the model as <name>__<tool>."
+                        },
+                        "approval": {
+                          "default": "ask",
+                          "description": "`ask` pauses the run for approval before each of this server's tool calls.",
+                          "type": "string",
+                          "enum": [
+                            "auto",
+                            "ask"
+                          ]
+                        },
+                        "autoApprove": {
+                          "default": [],
+                          "description": "Tools (by their name on the server) that skip approval even when it's `ask`.",
+                          "maxItems": 200,
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 200
+                          }
+                        },
+                        "transport": {
+                          "type": "string",
+                          "const": "http",
+                          "description": "Reached over Streamable HTTP from the harness."
+                        },
+                        "url": {
+                          "type": "string",
+                          "format": "uri",
+                          "description": "MCP endpoint URL."
+                        },
+                        "headers": {
+                          "default": {},
+                          "description": "Request headers. Use `${NAME}` to insert a credential, e.g. `Bearer ${TOKEN}`.",
+                          "type": "object",
+                          "propertyNames": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 200
+                          },
+                          "additionalProperties": {
+                            "type": "string",
+                            "maxLength": 4000
+                          }
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "approval",
+                        "autoApprove",
+                        "transport",
+                        "url",
+                        "headers"
+                      ],
+                      "additionalProperties": false
+                    }
+                  ],
+                  "description": "An MCP server whose tools the agent can call."
+                },
+                "description": "MCP servers the agent can call."
+              },
+              "skills": {
+                "default": [],
+                "maxItems": 50,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64,
+                      "pattern": "^[a-z0-9][a-z0-9_-]*$",
+                      "description": "Skill name the model uses to load it."
+                    },
+                    "description": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 1024,
+                      "description": "When to use the skill. The model sees this up front and loads the rest on demand."
+                    },
+                    "instructions": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 100000,
+                      "description": "Markdown body of the skill (the SKILL.md content below the frontmatter)."
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "description",
+                    "instructions"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Instructions the agent loads when a task calls for them."
+                },
+                "description": "Skills the agent can load."
+              }
+            },
+            "required": [
+              "name",
+              "description",
+              "systemPrompt",
+              "persona",
+              "model",
+              "sandbox",
+              "tools",
+              "mcpServers",
+              "skills"
+            ],
+            "additionalProperties": false,
+            "description": "The pre-filled agent configuration."
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "summary",
+          "description",
+          "recommendedIdentity",
+          "identityHint",
+          "credentials",
+          "config"
+        ],
+        "description": "A pre-configured coding agent to start from.",
+        "additionalProperties": false
       }
     }
   }

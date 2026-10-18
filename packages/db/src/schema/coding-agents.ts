@@ -34,6 +34,8 @@ export const codingAgents = pgTable(
     tools: jsonb().$type<ToolConfig[]>().notNull(),
     mcpServers: jsonb().$type<McpServerConfig[]>().notNull(),
     skills: jsonb().$type<Skill[]>().notNull(),
+    /** Built-in template the agent was created from (provenance only; no foreign key). */
+    templateId: text(),
     createdAt: timestamp().notNull().defaultNow(),
     updatedAt: timestamp()
       .notNull()
