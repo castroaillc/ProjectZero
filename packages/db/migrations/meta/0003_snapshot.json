@@ -1,5 +1,5 @@
 {
-  "id": "c858b2a7-ea99-4479-ae4d-f801edba956c",
+  "id": "ce12da46-4152-4835-a93c-0673c7f3cef4",
   "prevId": "96dd1686-ddaf-42e6-ad33-a06fd2d1c30d",
   "version": "7",
   "dialect": "postgresql",
@@ -542,6 +542,19 @@
           "notNull": true,
           "default": "''"
         },
+        "identity": {
+          "name": "identity",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "persona": {
+          "name": "persona",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{\"avatar\":\"🤖\",\"role\":\"\",\"git\":{\"name\":\"ProjectZero Agent\",\"email\":\"agent@projectzero.local\"}}'::jsonb"
+        },
         "model": {
           "name": "model",
           "type": "jsonb",
@@ -625,6 +638,92 @@
       "uniqueConstraints": {
         "coding_agents_userId_name_unique": {
           "name": "coding_agents_userId_name_unique",
+          "nullsNotDistinct": false,
+          "columns": ["user_id", "name"]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "coding_agents_identity_check": {
+          "name": "coding_agents_identity_check",
+          "value": "\"coding_agents\".\"identity\" in ('assistant', 'autonomous')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.credentials": {
+      "name": "credentials",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "ciphertext": {
+          "name": "ciphertext",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "hint": {
+          "name": "hint",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "credentials_user_id_user_id_fk": {
+          "name": "credentials_user_id_user_id_fk",
+          "tableFrom": "credentials",
+          "tableTo": "user",
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "credentials_userId_name_unique": {
+          "name": "credentials_userId_name_unique",
           "nullsNotDistinct": false,
           "columns": ["user_id", "name"]
         }

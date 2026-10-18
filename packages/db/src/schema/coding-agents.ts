@@ -1,13 +1,15 @@
 import {
-  DEFAULT_AGENT_IDENTITY,
+  DEFAULT_AGENT_PERSONA,
   type AgentIdentity,
+  type AgentPersona,
   type McpServerConfig,
   type ModelConfig,
   type SandboxConfig,
   type Skill,
   type ToolConfig,
 } from "@projectzero/shared";
-import { index, jsonb, pgTable, text, timestamp, unique, uuid } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
+import { check, index, jsonb, pgTable, text, timestamp, unique, uuid } from "drizzle-orm/pg-core";
 import { user } from "./auth";
 
 /**
@@ -24,7 +26,9 @@ export const codingAgents = pgTable(
     name: text().notNull(),
     description: text().notNull().default(""),
     systemPrompt: text().notNull().default(""),
-    identity: jsonb().$type<AgentIdentity>().notNull().default(DEFAULT_AGENT_IDENTITY),
+    /** "assistant" or "autonomous"; never changes after insert. */
+    identity: text().$type<AgentIdentity>().notNull(),
+    persona: jsonb().$type<AgentPersona>().notNull().default(DEFAULT_AGENT_PERSONA),
     model: jsonb().$type<ModelConfig>().notNull(),
     sandbox: jsonb().$type<SandboxConfig>().notNull(),
     tools: jsonb().$type<ToolConfig[]>().notNull(),
@@ -36,5 +40,9 @@ export const codingAgents = pgTable(
       .defaultNow()
       .$onUpdate(() => new Date()),
   },
-  (t) => [unique().on(t.userId, t.name), index().on(t.userId, t.createdAt)],
+  (t) => [
+    unique().on(t.userId, t.name),
+    index().on(t.userId, t.createdAt),
+    check("coding_agents_identity_check", sql`${t.identity} in ('assistant', 'autonomous')`),
+  ],
 );

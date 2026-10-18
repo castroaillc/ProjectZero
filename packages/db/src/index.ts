@@ -17,3 +17,4 @@ export type TodoRow = typeof schema.todos.$inferSelect;
 export type NewTodoRow = typeof schema.todos.$inferInsert;
 export type AgentThreadRow = typeof schema.agentThreads.$inferSelect;
 export type CodingAgentRow = typeof schema.codingAgents.$inferSelect;
+export type CredentialRow = typeof schema.credentials.$inferSelect;
