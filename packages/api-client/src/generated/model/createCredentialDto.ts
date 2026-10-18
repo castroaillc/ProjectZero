@@ -5,13 +5,16 @@
  * REST API shared by the ProjectZero web, desktop and mobile apps.
  * OpenAPI spec version: 1
  */
+import type { CreateCredentialDtoScope } from "./createCredentialDtoScope";
 
 /**
  * Fields for storing a credential.
  */
 export interface CreateCredentialDto {
+  /** `shared` (admins only) for autonomous agents, `personal` for your own use. */
+  scope: CreateCredentialDtoScope;
   /**
-   * Name agents use to refer to it, unique per user.
+   * Name agents use to refer to it, unique per scope.
    * @minLength 1
    * @maxLength 64
    * @pattern ^[A-Z][A-Z0-9_]*$

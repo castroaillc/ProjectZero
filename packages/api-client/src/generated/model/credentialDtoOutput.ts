@@ -5,6 +5,7 @@
  * REST API shared by the ProjectZero web, desktop and mobile apps.
  * OpenAPI spec version: 1
  */
+import type { CredentialDtoOutputScope } from "./credentialDtoOutputScope";
 
 /**
  * A stored secret. Only its name, description and hint are ever returned.
@@ -15,8 +16,10 @@ export interface CredentialDtoOutput {
    * @pattern ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
    */
   id: string;
+  /** Shared with the organization, or one member's own. */
+  scope: CredentialDtoOutputScope;
   /**
-   * Name agents use to refer to it, unique per user.
+   * Name agents use to refer to it, unique per scope.
    * @minLength 1
    * @maxLength 64
    * @pattern ^[A-Z][A-Z0-9_]*$
