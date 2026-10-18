@@ -3,8 +3,9 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { bearer, openAPI } from "better-auth/plugins";
 
-/** Path the auth handler is mounted on; clients point their auth base URL here. */
-export const AUTH_BASE_PATH = "/api/auth";
+import { AUTH_BASE_PATH } from "./constants";
+
+export { AUTH_BASE_PATH };
 
 export interface CreateAuthOptions {
   db: Db;
