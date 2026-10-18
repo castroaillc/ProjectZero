@@ -14,3 +14,5 @@ coverage/
 next-env.d.ts
 out/
 *.tsbuildinfo
+# electron-vite / vite temp config bundles
+*.config.ts.*.mjs

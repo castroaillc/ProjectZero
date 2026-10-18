@@ -5,9 +5,9 @@
   "type": "module",
   "main": "./out/main/index.js",
   "scripts": {
-    "dev": "node ../../scripts/with-env.mjs electron-vite dev",
+    "dev": "install-electron && node ../../scripts/with-env.mjs electron-vite dev",
     "build": "node ../../scripts/with-env.mjs electron-vite build",
-    "preview": "node ../../scripts/with-env.mjs electron-vite preview",
+    "preview": "install-electron && node ../../scripts/with-env.mjs electron-vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
     "test:e2e": "node ../../scripts/with-env.mjs node e2e/app.e2e.mjs"
   },
