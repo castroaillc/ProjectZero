@@ -2,12 +2,14 @@ import {
   ApiError,
   BUILTIN_TOOLS,
   CreateCodingAgentSchema,
+  DEFAULT_AGENT_IDENTITY,
   getListCodingAgentsQueryKey,
   MODEL_PROVIDERS,
   useCreateCodingAgent,
   useDeleteCodingAgent,
   useListCodingAgents,
   useUpdateCodingAgent,
+  type AgentIdentity,
   type BuiltinToolName,
   type CodingAgentDtoOutput,
   type CreateCodingAgent,
@@ -46,6 +48,7 @@ function newDraft(): CreateCodingAgent {
     name: "",
     description: "",
     systemPrompt: "",
+    identity: DEFAULT_AGENT_IDENTITY,
     model: { provider: "ollama", model: MODEL_DEFAULTS.ollama.model },
     sandbox: {
       image: "node:24-bookworm",
@@ -190,6 +193,10 @@ function AgentEditor({
     setSaved(false);
     setDraft((d) => ({ ...d, [key]: value }));
   };
+  const setIdentity = (patch: Partial<AgentIdentity>) =>
+    set("identity", { ...draft.identity, ...patch });
+  const setGit = (patch: Partial<AgentIdentity["git"]>) =>
+    setIdentity({ git: { ...draft.identity.git, ...patch } });
   const setModel = (patch: Partial<ModelConfig>) => set("model", { ...draft.model, ...patch });
   const setSandbox = (patch: Partial<SandboxConfig>) =>
     set("sandbox", { ...draft.sandbox, ...patch });
@@ -266,6 +273,53 @@ function AgentEditor({
               className="min-h-28"
             />
           </Field>
+        </Section>
+
+        <Section
+          title="Identity"
+          hint="Who the agent is, and who its commits in the sandbox are attributed to."
+        >
+          <div className="grid gap-4 sm:grid-cols-[6rem_1fr]">
+            <Field label="Avatar">
+              <Input
+                value={draft.identity.avatar}
+                onChange={(e) => setIdentity({ avatar: e.target.value })}
+                maxLength={16}
+                className="text-center text-lg"
+              />
+            </Field>
+            <Field label="Role">
+              <Input
+                value={draft.identity.role}
+                onChange={(e) => setIdentity({ role: e.target.value })}
+                placeholder="e.g. Senior TypeScript engineer"
+                maxLength={200}
+              />
+            </Field>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <Field label="Git author name">
+              <Input
+                value={draft.identity.git.name}
+                onChange={(e) => setGit({ name: e.target.value })}
+              />
+            </Field>
+            <Field label="Git author email">
+              <Input
+                type="email"
+                value={draft.identity.git.email}
+                onChange={(e) => setGit({ email: e.target.value })}
+              />
+            </Field>
+            <Field label="Push token env var (optional)">
+              <Input
+                value={draft.identity.git.tokenEnv ?? ""}
+                onChange={(e) => setGit({ tokenEnv: optional(e.target.value) })}
+                placeholder="GITHUB_TOKEN"
+                className="font-mono"
+              />
+            </Field>
+          </div>
         </Section>
 
         <Section title="Model" hint="The model must support tool calling.">
@@ -726,7 +780,9 @@ export function CodingAgentsScreen({ nav }: CodingAgentsScreenProps) {
       <header className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold">Coding agents</h1>
-          <p className="text-sm text-muted">Model, sandbox, tools, MCP servers and skills.</p>
+          <p className="text-sm text-muted">
+            Identity, model, sandbox, tools, MCP servers and skills.
+          </p>
         </div>
         {nav}
       </header>
@@ -758,7 +814,12 @@ export function CodingAgentsScreen({ nav }: CodingAgentsScreenProps) {
                     agent.id === selected ? "bg-border/60" : "hover:bg-border/40",
                   )}
                 >
-                  <span className="font-medium">{agent.name}</span>
+                  <span className="font-medium">
+                    <span aria-hidden className="mr-1.5">
+                      {agent.identity.avatar}
+                    </span>
+                    {agent.name}
+                  </span>
                   <span className="truncate text-xs text-muted">
                     {agent.model.provider} · {agent.model.model}
                   </span>
