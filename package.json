@@ -17,7 +17,8 @@
     "wt": "tsx scripts/wt.ts",
     "prepare": "husky",
     "test:e2e": "turbo run test:e2e",
-    "api:gen": "turbo run api:gen"
+    "api:gen": "turbo run api:gen",
+    "agent:eval": "pnpm --filter @projectzero/agent agent:eval"
   },
   "devDependencies": {
     "@commitlint/cli": "21.2.3",

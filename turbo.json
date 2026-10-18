@@ -5,8 +5,9 @@
     "DATABASE_URL",
     "*_PORT",
     "LANGSMITH_*",
-    "ANTHROPIC_API_KEY",
-    "BETTER_AUTH_*"
+    "BETTER_AUTH_*",
+    "AGENT_MODEL",
+    "OLLAMA_BASE_URL"
   ],
   "tasks": {
     "build": {
