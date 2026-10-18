@@ -2,7 +2,9 @@
  * Worktree helper: one git worktree per increment, each with its own ports and database
  * so several can run `pnpm dev` side by side.
  *
- *   pnpm wt new <name> [--branch <branch>]   create ../project0.worktrees/<name> on feat/<name>
+ *   pnpm wt new <name> [--branch <branch>] [--from <ref>]
+ *                                            create ../project0.worktrees/<name> on feat/<name>,
+ *                                            branched from main (or <ref> to stack on open work)
  *   pnpm wt rm <name> [--force]              drop its database and remove the worktree
  *   pnpm wt ls                               list worktrees with their port offsets
  */
@@ -83,7 +85,7 @@ function psql(sql: string): void {
   );
 }
 
-function cmdNew(name: string, branch: string): void {
+function cmdNew(name: string, branch: string, from: string): void {
   const path = join(worktreesDir, name);
   if (existsSync(path)) throw new Error(`${path} already exists`);
 
@@ -92,7 +94,7 @@ function cmdNew(name: string, branch: string): void {
   while (used.has(offset)) offset += OFFSET_STEP;
 
   const branchExists = run("git", ["branch", "--list", branch]) !== "";
-  run("git", ["worktree", "add", path, ...(branchExists ? [branch] : ["-b", branch, "main"])], {
+  run("git", ["worktree", "add", path, ...(branchExists ? [branch] : ["-b", branch, from])], {
     stdio: ["ignore", "inherit", "inherit"],
   });
 
@@ -146,12 +148,15 @@ function cmdLs(): void {
 
 const [cmd, name, ...rest] = process.argv.slice(2);
 const flag = (f: string) => rest.includes(f);
-const branchIdx = rest.indexOf("--branch");
+const option = (f: string) => {
+  const i = rest.indexOf(f);
+  return i >= 0 ? rest[i + 1] : undefined;
+};
 
 try {
   if (cmd === "ls") cmdLs();
   else if (cmd === "new" && name)
-    cmdNew(name, branchIdx >= 0 ? rest[branchIdx + 1]! : `feat/${name}`);
+    cmdNew(name, option("--branch") ?? `feat/${name}`, option("--from") ?? "main");
   else if (cmd === "rm" && name) cmdRm(name, flag("--force"));
   else {
     console.error("usage: pnpm wt <new|rm> <name> | pnpm wt ls");
