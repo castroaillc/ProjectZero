@@ -1,9 +1,11 @@
-import type {
-  McpServerConfig,
-  ModelConfig,
-  SandboxConfig,
-  Skill,
-  ToolConfig,
+import {
+  DEFAULT_AGENT_IDENTITY,
+  type AgentIdentity,
+  type McpServerConfig,
+  type ModelConfig,
+  type SandboxConfig,
+  type Skill,
+  type ToolConfig,
 } from "@projectzero/shared";
 import { index, jsonb, pgTable, text, timestamp, unique, uuid } from "drizzle-orm/pg-core";
 import { user } from "./auth";
@@ -22,6 +24,7 @@ export const codingAgents = pgTable(
     name: text().notNull(),
     description: text().notNull().default(""),
     systemPrompt: text().notNull().default(""),
+    identity: jsonb().$type<AgentIdentity>().notNull().default(DEFAULT_AGENT_IDENTITY),
     model: jsonb().$type<ModelConfig>().notNull(),
     sandbox: jsonb().$type<SandboxConfig>().notNull(),
     tools: jsonb().$type<ToolConfig[]>().notNull(),

@@ -1,0 +1,1 @@
+ALTER TABLE "coding_agents" ADD COLUMN "identity" jsonb DEFAULT '{"avatar":"🤖","role":"","git":{"name":"ProjectZero Agent","email":"agent@projectzero.local"}}'::jsonb NOT NULL;
