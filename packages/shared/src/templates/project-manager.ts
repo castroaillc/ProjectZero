@@ -1,4 +1,5 @@
 import type { AgentTemplateDefinition } from "../agent-template";
+import { GITHUB_APP_CREDENTIAL } from "../credential";
 
 // GitHub's remote MCP server (github/github-mcp-server). Read-only tools skip approval so the
 // agent can look around freely; anything that changes GitHub still asks unless the user opts out.
@@ -71,15 +72,15 @@ export const projectManagerTemplate = {
 
 It reaches GitHub through GitHub's MCP server. Read-only tools run without asking; anything that changes GitHub asks for approval, unless you turn that off.
 
-To set it up, add a GITHUB_TOKEN credential, then point the agent at your project in chat, e.g. "Use project #3 in org acme". To give it your repo's docs and code as context, set the sandbox repository.`,
+To set it up, install the ProjectZero GitHub App on your GitHub organization (Agents → GitHub), then point the agent at your project in chat, e.g. "Use project #3 in org acme". To give it your repo's docs and code as context, set the sandbox repository.`,
   recommendedIdentity: "autonomous",
   identityHint:
     "Pick Runs on its own for a team PM that posts standups and status updates on a schedule. Pick A person's assistant if each teammate should work with it through their own GitHub account.",
   credentials: [
     {
-      name: "GITHUB_TOKEN",
+      name: GITHUB_APP_CREDENTIAL,
       description:
-        "GitHub token for the MCP server. Classic PAT: repo, project, read:org. Fine-grained PAT: organization Projects (read & write), and repository Issues (read & write), Pull requests, Actions, Contents and Metadata (read). Fine-grained tokens can't reach user-owned projects.",
+        "Comes from the ProjectZero GitHub App: install it on the GitHub organization that owns the project and repositories. The app can't reach user-owned projects; for those, store a classic PAT (repo, project, read:org) and use it instead.",
     },
   ],
   config: {
@@ -112,7 +113,8 @@ To set it up, add a GITHUB_TOKEN credential, then point the agent at your projec
         transport: "http",
         url: GITHUB_MCP_URL,
         headers: {
-          Authorization: "Bearer ${GITHUB_TOKEN}",
+          // Resolved at run time to a GitHub App installation token (GITHUB_APP_CREDENTIAL).
+          Authorization: "Bearer ${GITHUB_APP_TOKEN}",
           "X-MCP-Toolsets": GITHUB_TOOLSETS,
         },
         approval: "ask",
