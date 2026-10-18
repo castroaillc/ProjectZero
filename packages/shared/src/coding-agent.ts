@@ -181,6 +181,11 @@ const mcpBase = {
     .enum(["auto", "ask"])
     .default("ask")
     .describe("`ask` pauses the run for approval before each of this server's tool calls."),
+  autoApprove: z
+    .array(z.string().min(1).max(200))
+    .max(200)
+    .default([])
+    .describe("Tools (by their name on the server) that skip approval even when it's `ask`."),
 };
 
 export const McpServerConfigSchema = z
@@ -275,13 +280,21 @@ export const CodingAgentSchema = z
     requiredCredentials: z
       .array(CredentialNameSchema)
       .describe("Credentials the agent's config refers to; a run needs all of them."),
+    // Optional rather than nullable: the OpenAPI emitter renders nullable strings as arrays.
+    templateId: z
+      .string()
+      .optional()
+      .describe("Template the agent was created from, if any. Kept for provenance only."),
     createdAt: z.iso.datetime().describe("When the agent was created (ISO 8601)."),
     updatedAt: z.iso.datetime().describe("When the agent was last changed (ISO 8601)."),
   })
   .describe("A coding agent: identity, persona, model, sandbox, tools, MCP servers and skills.");
 
 export const CreateCodingAgentSchema = z
-  .object(configFields)
+  .object({
+    ...configFields,
+    templateId: slug.optional().describe("Template this agent starts from, if any."),
+  })
   .describe("Fields for creating a coding agent.");
 
 /**
