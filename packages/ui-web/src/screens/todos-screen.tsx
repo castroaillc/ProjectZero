@@ -8,7 +8,7 @@ import {
 } from "@projectzero/api-client";
 import { useQueryClient } from "@tanstack/react-query";
 import { Check, LogOut, Trash2 } from "lucide-react";
-import { useState, type FormEvent } from "react";
+import { useState, type FormEvent, type ReactNode } from "react";
 import { cn } from "../cn";
 import { Button } from "../components/button";
 import { Card } from "../components/card";
@@ -17,10 +17,12 @@ import { Input } from "../components/input";
 export interface TodosScreenProps {
   userName: string;
   onSignOut: () => void;
+  /** Links or buttons shown next to "Sign out", e.g. to the coding agents. */
+  nav?: ReactNode;
 }
 
 /** The signed-in todo list, shared by the web app and the desktop renderer. */
-export function TodosScreen({ userName, onSignOut }: TodosScreenProps) {
+export function TodosScreen({ userName, onSignOut, nav }: TodosScreenProps) {
   const queryClient = useQueryClient();
   const refresh = {
     mutation: {
@@ -55,9 +57,12 @@ export function TodosScreen({ userName, onSignOut }: TodosScreenProps) {
             {todos.isSuccess && ` · ${remaining} remaining`}
           </p>
         </div>
-        <Button variant="ghost" onClick={onSignOut}>
-          <LogOut className="size-4" aria-hidden /> Sign out
-        </Button>
+        <div className="flex items-center gap-1">
+          {nav}
+          <Button variant="ghost" onClick={onSignOut}>
+            <LogOut className="size-4" aria-hidden /> Sign out
+          </Button>
+        </div>
       </header>
 
       <Card className="mt-6 p-4">
