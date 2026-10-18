@@ -1,9 +1,9 @@
 {
-  "openapi": "3.0.0",
+  "openapi": "3.1.0",
   "paths": {
     "/v1/health": {
       "get": {
-        "operationId": "HealthController_check",
+        "operationId": "checkHealth",
         "parameters": [],
         "responses": {
           "200": {
@@ -164,6 +164,7 @@
             }
           }
         },
+        "summary": "Report whether the API is up and can reach the database.",
         "tags": [
           "health"
         ]
@@ -171,7 +172,7 @@
     },
     "/v1/todos": {
       "get": {
-        "operationId": "TodosController_list",
+        "operationId": "listTodos",
         "parameters": [],
         "responses": {
           "200": {
@@ -199,12 +200,13 @@
             "bearer": []
           }
         ],
+        "summary": "List the signed-in user's todos, newest first.",
         "tags": [
           "todos"
         ]
       },
       "post": {
-        "operationId": "TodosController_create",
+        "operationId": "createTodo",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -239,6 +241,7 @@
             "bearer": []
           }
         ],
+        "summary": "Create a todo for the signed-in user.",
         "tags": [
           "todos"
         ]
@@ -246,7 +249,7 @@
     },
     "/v1/todos/{id}": {
       "get": {
-        "operationId": "TodosController_get",
+        "operationId": "getTodo",
         "parameters": [
           {
             "name": "id",
@@ -283,12 +286,13 @@
             "bearer": []
           }
         ],
+        "summary": "Get one of the signed-in user's todos.",
         "tags": [
           "todos"
         ]
       },
       "patch": {
-        "operationId": "TodosController_update",
+        "operationId": "updateTodo",
         "parameters": [
           {
             "name": "id",
@@ -335,12 +339,13 @@
             "bearer": []
           }
         ],
+        "summary": "Update the title or completion state of a todo.",
         "tags": [
           "todos"
         ]
       },
       "delete": {
-        "operationId": "TodosController_remove",
+        "operationId": "deleteTodo",
         "parameters": [
           {
             "name": "id",
@@ -370,6 +375,7 @@
             "bearer": []
           }
         ],
+        "summary": "Delete a todo.",
         "tags": [
           "todos"
         ]

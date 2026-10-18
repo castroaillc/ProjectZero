@@ -14,6 +14,7 @@ import {
   ApiCookieAuth,
   ApiNoContentResponse,
   ApiNotFoundResponse,
+  ApiOperation,
   ApiTags,
   ApiUnauthorizedResponse,
 } from "@nestjs/swagger";
@@ -30,14 +31,17 @@ import { TodosService } from "./todos.service";
 export class TodosController {
   constructor(private readonly todos: TodosService) {}
 
-  /** Lists the signed-in user's todos, newest first. */
+  @ApiOperation({
+    operationId: "listTodos",
+    summary: "List the signed-in user's todos, newest first.",
+  })
   @Get()
   @ZodResponse({ status: 200, type: [TodoDto] })
   list(@Session() session: UserSession) {
     return this.todos.list(session.user.id);
   }
 
-  /** Gets one of the signed-in user's todos. */
+  @ApiOperation({ operationId: "getTodo", summary: "Get one of the signed-in user's todos." })
   @Get(":id")
   @ZodResponse({ status: 200, type: TodoDto })
   @ApiNotFoundResponse()
@@ -45,14 +49,17 @@ export class TodosController {
     return this.todos.get(session.user.id, id);
   }
 
-  /** Creates a todo for the signed-in user. */
+  @ApiOperation({ operationId: "createTodo", summary: "Create a todo for the signed-in user." })
   @Post()
   @ZodResponse({ status: 201, type: TodoDto })
   create(@Session() session: UserSession, @Body() body: CreateTodoDto) {
     return this.todos.create(session.user.id, body);
   }
 
-  /** Updates the title or completion state of a todo. */
+  @ApiOperation({
+    operationId: "updateTodo",
+    summary: "Update the title or completion state of a todo.",
+  })
   @Patch(":id")
   @ZodResponse({ status: 200, type: TodoDto })
   @ApiNotFoundResponse()
@@ -64,7 +71,7 @@ export class TodosController {
     return this.todos.update(session.user.id, id, body);
   }
 
-  /** Deletes a todo. */
+  @ApiOperation({ operationId: "deleteTodo", summary: "Delete a todo." })
   @Delete(":id")
   @HttpCode(204)
   @ApiNoContentResponse()
