@@ -1,0 +1,1 @@
+ALTER TABLE "coding_agents" ADD COLUMN "template_id" text;
