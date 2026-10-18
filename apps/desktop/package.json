@@ -1,0 +1,38 @@
+{
+  "name": "desktop",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./out/main/index.js",
+  "scripts": {
+    "dev": "node ../../scripts/with-env.mjs electron-vite dev",
+    "build": "node ../../scripts/with-env.mjs electron-vite build",
+    "preview": "node ../../scripts/with-env.mjs electron-vite preview",
+    "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
+    "test:e2e": "node ../../scripts/with-env.mjs node e2e/app.e2e.mjs"
+  },
+  "dependencies": {
+    "@projectzero/api-client": "workspace:*",
+    "@projectzero/auth": "workspace:*",
+    "@projectzero/ui-web": "workspace:*",
+    "@tanstack/react-query": "5.104.3",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@projectzero/config": "workspace:*",
+    "@tailwindcss/vite": "4.3.3",
+    "@types/node": "26.6.5",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.1.2",
+    "electron": "44.9.0",
+    "electron-vite": "6.0.0",
+    "playwright-core": "1.64.1",
+    "tailwindcss": "4.3.3",
+    "vite": "8.3.4",
+    "@projectzero/db": "workspace:*",
+    "drizzle-orm": "0.45.4"
+  }
+}

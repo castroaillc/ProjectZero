@@ -41,6 +41,10 @@
     "test:e2e": {
       "dependsOn": ["^build"],
       "cache": false
+    },
+    "desktop#test:e2e": {
+      "dependsOn": ["build", "api#build"],
+      "cache": false
     }
   }
 }

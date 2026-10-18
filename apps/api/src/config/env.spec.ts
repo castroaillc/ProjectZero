@@ -43,6 +43,7 @@ describe("trustedOrigins", () => {
     expect(trustedOrigins(env)).toEqual([
       "http://localhost:3010",
       "http://localhost:5183",
+      "app://projectzero",
       "https://x.dev",
     ]);
   });

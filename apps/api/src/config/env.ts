@@ -36,11 +36,15 @@ export function parseEnv(source: NodeJS.ProcessEnv = process.env): Env {
   return result.data;
 }
 
+/** Origin of the packaged desktop renderer (served from a custom scheme, not file://). */
+export const DESKTOP_APP_ORIGIN = "app://projectzero";
+
 /** Origins of the clients that may call the API in this environment. */
 export function trustedOrigins(env: Env): string[] {
   return [
     `http://localhost:${env.WEB_PORT}`,
     `http://localhost:${env.DESKTOP_RENDERER_PORT}`,
+    DESKTOP_APP_ORIGIN,
     ...env.TRUSTED_ORIGINS,
   ];
 }

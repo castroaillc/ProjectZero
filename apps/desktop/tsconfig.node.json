@@ -1,0 +1,6 @@
+{
+  "extends": "@projectzero/config/tsconfig/node.json",
+  "compilerOptions": { "types": ["node", "electron-vite/node"] },
+  "include": ["electron.vite.config.ts", "src/main", "src/preload"],
+  "exclude": ["src/preload/api.d.ts"]
+}
