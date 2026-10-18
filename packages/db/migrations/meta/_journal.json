@@ -36,6 +36,13 @@
       "when": 1792339061421,
       "tag": "0004_flawless_argent",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792339919799,
+      "tag": "0005_organizations",
+      "breakpoints": true
     }
   ]
 }

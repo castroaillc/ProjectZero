@@ -10,19 +10,22 @@ import {
 } from "@projectzero/shared";
 import { sql } from "drizzle-orm";
 import { check, index, jsonb, pgTable, text, timestamp, unique, uuid } from "drizzle-orm/pg-core";
-import { user } from "./auth";
+import { organization, user } from "./auth";
 
 /**
- * Saved coding-agent configurations. Each section is validated by its zod schema in
- * @projectzero/shared before it's written, so the JSONB columns hold well-formed config.
+ * Saved coding-agent configurations, owned by an organization and shared by its members. Each
+ * section is validated by its zod schema in @projectzero/shared before it's written, so the
+ * JSONB columns hold well-formed config.
  */
 export const codingAgents = pgTable(
   "coding_agents",
   {
     id: uuid().primaryKey().defaultRandom(),
-    userId: text()
+    organizationId: text()
       .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
+      .references(() => organization.id, { onDelete: "cascade" }),
+    /** Member who created it; kept for attribution, cleared if they're deleted. */
+    createdBy: text().references(() => user.id, { onDelete: "set null" }),
     name: text().notNull(),
     description: text().notNull().default(""),
     systemPrompt: text().notNull().default(""),
@@ -43,8 +46,8 @@ export const codingAgents = pgTable(
       .$onUpdate(() => new Date()),
   },
   (t) => [
-    unique().on(t.userId, t.name),
-    index().on(t.userId, t.createdAt),
+    unique().on(t.organizationId, t.name),
+    index().on(t.organizationId, t.createdAt),
     check("coding_agents_identity_check", sql`${t.identity} in ('assistant', 'autonomous')`),
   ],
 );

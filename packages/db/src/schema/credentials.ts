@@ -1,18 +1,22 @@
 import { pgTable, text, timestamp, unique, uuid } from "drizzle-orm/pg-core";
-import { user } from "./auth";
+import { organization, user } from "./auth";
 
 /**
- * Secrets agents use (API keys, tokens), one set per user. `ciphertext` is AES-256-GCM sealed by
- * the API; the plaintext never touches the database. `hint` is the last few characters, shown
- * so users can tell credentials apart.
+ * Secrets agents use (API keys, tokens), held by an organization. Shared ones (`userId` null)
+ * are what autonomous agents run with; personal ones belong to one member and are what assistant
+ * agents use when that member chats with them. `ciphertext` is AES-256-GCM sealed by the API;
+ * the plaintext never touches the database. `hint` is the last few characters, shown so users
+ * can tell credentials apart.
  */
 export const credentials = pgTable(
   "credentials",
   {
     id: uuid().primaryKey().defaultRandom(),
-    userId: text()
+    organizationId: text()
       .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
+      .references(() => organization.id, { onDelete: "cascade" }),
+    /** Owner of a personal credential; null for one shared with the whole organization. */
+    userId: text().references(() => user.id, { onDelete: "cascade" }),
     name: text().notNull(),
     description: text().notNull().default(""),
     ciphertext: text().notNull(),
@@ -23,6 +27,7 @@ export const credentials = pgTable(
       .defaultNow()
       .$onUpdate(() => new Date()),
   },
-  // The unique (user_id, name) index also serves lookups by user.
-  (t) => [unique().on(t.userId, t.name)],
+  // NULLS NOT DISTINCT so shared credentials (user_id null) are unique per name too. The index
+  // also serves lookups by organization.
+  (t) => [unique().on(t.organizationId, t.userId, t.name).nullsNotDistinct()],
 );

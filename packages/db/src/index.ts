@@ -18,3 +18,6 @@ export type NewTodoRow = typeof schema.todos.$inferInsert;
 export type AgentThreadRow = typeof schema.agentThreads.$inferSelect;
 export type CodingAgentRow = typeof schema.codingAgents.$inferSelect;
 export type CredentialRow = typeof schema.credentials.$inferSelect;
+export type GithubInstallationRow = typeof schema.githubInstallations.$inferSelect;
+export type OrganizationRow = typeof schema.organization.$inferSelect;
+export type MemberRow = typeof schema.member.$inferSelect;
