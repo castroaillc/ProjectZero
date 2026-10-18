@@ -12,6 +12,7 @@ import {
   useListCredentials,
   useUpdateCodingAgent,
   type AgentIdentity,
+  type AgentTemplateDtoOutput,
   type AgentPersona,
   type BuiltinToolName,
   type CodingAgentDtoOutput,
@@ -32,6 +33,7 @@ import { Field } from "../components/field";
 import { Input } from "../components/input";
 import { Select } from "../components/select";
 import { Textarea } from "../components/textarea";
+import { AgentTemplatePicker } from "./agent-template-picker";
 import { CredentialsPanel } from "./credentials-panel";
 
 export interface CodingAgentsScreenProps {
@@ -194,12 +196,20 @@ function issuesFrom(error: unknown): Issue[] | null {
   return Array.isArray(errors) ? errors : null;
 }
 
+/** A template's config as a draft for a new agent, remembering which template it came from. */
+function fromTemplate(template: AgentTemplateDtoOutput): Draft {
+  return { ...(template.config as Draft), templateId: template.id };
+}
+
 function AgentEditor({
   agent,
+  template,
   onSaved,
   onDeleted,
 }: {
   agent: CodingAgentDtoOutput | null;
+  /** For a new agent: the template it starts from. */
+  template?: AgentTemplateDtoOutput | null;
   onSaved: (id: string) => void;
   onDeleted: () => void;
 }) {
@@ -210,7 +220,9 @@ function AgentEditor({
   const remove = useDeleteCodingAgent();
 
   const credentials = useListCredentials();
-  const [draft, setDraft] = useState<Draft>(() => (agent ? toDraft(agent) : newDraft()));
+  const [draft, setDraft] = useState<Draft>(() =>
+    agent ? toDraft(agent) : template ? fromTemplate(template) : newDraft(),
+  );
   const [issues, setIssues] = useState<Issue[]>([]);
   const [saved, setSaved] = useState(false);
   const mcpKeys = useListKeys(draft.mcpServers.length);
@@ -272,6 +284,7 @@ function AgentEditor({
   const pending = create.isPending || update.isPending;
   const connected = new Set((credentials.data ?? []).map((c) => c.name));
   const needed = requiredCredentials(draft);
+  const credentialHelp = new Map(template?.credentials.map((c) => [c.name, c.description]));
 
   return (
     <Card className="p-6">
@@ -282,12 +295,26 @@ function AgentEditor({
           ))}
         </datalist>
 
+        {template && (
+          <div className="flex flex-col gap-2 rounded-lg border border-accent/40 bg-accent/5 p-4 text-sm">
+            <p className="font-medium">
+              <span aria-hidden className="mr-1.5">
+                {template.config.persona.avatar}
+              </span>
+              Starting from the {template.name} template
+            </p>
+            <p className="whitespace-pre-line text-muted">{template.description}</p>
+          </div>
+        )}
+
         <Section
           title="How will this agent work?"
           hint={
             agent
               ? "Fixed when the agent was created."
-              : "This decides whose accounts its actions use, and can't be changed later."
+              : template
+                ? `${template.identityHint} This can't be changed later.`
+                : "This decides whose accounts its actions use, and can't be changed later."
           }
         >
           <div role="radiogroup" aria-label="Identity" className="grid gap-3 sm:grid-cols-2">
@@ -310,7 +337,14 @@ function AgentEditor({
                 >
                   <Icon className="mt-0.5 size-5 shrink-0 text-accent" aria-hidden />
                   <span>
-                    <span className="block text-sm font-medium">{title}</span>
+                    <span className="block text-sm font-medium">
+                      {title}
+                      {!agent && template?.recommendedIdentity === value && (
+                        <span className="ml-2 rounded-full bg-accent/15 px-2 py-0.5 text-xs font-normal text-accent">
+                          Recommended
+                        </span>
+                      )}
+                    </span>
                     <span className="block text-xs text-muted">{body}</span>
                   </span>
                 </button>
@@ -631,7 +665,11 @@ function AgentEditor({
                   <Select
                     value={server.transport}
                     onChange={(e) => {
-                      const base = { name: server.name, approval: server.approval };
+                      const base = {
+                        name: server.name,
+                        approval: server.approval,
+                        autoApprove: server.autoApprove,
+                      };
                       setMcp(
                         i,
                         e.target.value === "http"
@@ -719,6 +757,15 @@ function AgentEditor({
                   />
                 </>
               )}
+              {server.approval === "ask" && (
+                <TextField
+                  label="Run without asking (tool names, one per line)"
+                  value={server.autoApprove}
+                  onChange={(autoApprove) => setMcp(i, { ...server, autoApprove })}
+                  codec={lines}
+                  placeholder={"list_issues\nissue_read"}
+                />
+              )}
             </div>
           ))}
           <Button
@@ -729,7 +776,15 @@ function AgentEditor({
               mcpKeys.add();
               set("mcpServers", [
                 ...draft.mcpServers,
-                { name: "", approval: "ask", transport: "stdio", command: "", args: [], env: {} },
+                {
+                  name: "",
+                  approval: "ask",
+                  autoApprove: [],
+                  transport: "stdio",
+                  command: "",
+                  args: [],
+                  env: {},
+                },
               ]);
             }}
           >
@@ -814,16 +869,21 @@ function AgentEditor({
           ) : (
             <ul className="flex flex-col gap-1.5">
               {needed.map((name) => (
-                <li key={name} className="flex items-center gap-2 text-sm">
-                  {connected.has(name) ? (
-                    <Check className="size-4 text-accent" aria-hidden />
-                  ) : (
-                    <CircleAlert className="size-4 text-danger" aria-hidden />
-                  )}
-                  <span className="font-mono">{name}</span>
-                  <span className="text-muted">
-                    {connected.has(name) ? "connected" : "not in your credentials yet"}
+                <li key={name} className="flex flex-col gap-0.5 text-sm">
+                  <span className="flex items-center gap-2">
+                    {connected.has(name) ? (
+                      <Check className="size-4 text-accent" aria-hidden />
+                    ) : (
+                      <CircleAlert className="size-4 text-danger" aria-hidden />
+                    )}
+                    <span className="font-mono">{name}</span>
+                    <span className="text-muted">
+                      {connected.has(name) ? "connected" : "not in your credentials yet"}
+                    </span>
                   </span>
+                  {credentialHelp.has(name) && (
+                    <span className="pl-6 text-xs text-muted">{credentialHelp.get(name)}</span>
+                  )}
                 </li>
               ))}
             </ul>
@@ -869,6 +929,12 @@ function AgentEditor({
 export function CodingAgentsScreen({ nav }: CodingAgentsScreenProps) {
   const agents = useListCodingAgents();
   const [selected, setSelected] = useState<string | "new" | "credentials" | null>(null);
+  // While creating: undefined = still picking, null = blank, otherwise the chosen template.
+  const [start, setStart] = useState<AgentTemplateDtoOutput | null | undefined>(undefined);
+  const startNew = () => {
+    setStart(undefined);
+    setSelected("new");
+  };
   const items = agents.data ?? [];
   const current = items.find((a) => a.id === selected) ?? null;
   const editing = selected === "new" || current !== null;
@@ -890,7 +956,7 @@ export function CodingAgentsScreen({ nav }: CodingAgentsScreenProps) {
           <Button
             variant={selected === "new" ? "primary" : "ghost"}
             className="w-full justify-start"
-            onClick={() => setSelected("new")}
+            onClick={startNew}
           >
             <Plus className="size-4" aria-hidden /> New agent
           </Button>
@@ -939,10 +1005,13 @@ export function CodingAgentsScreen({ nav }: CodingAgentsScreenProps) {
 
         {selected === "credentials" ? (
           <CredentialsPanel />
+        ) : selected === "new" && start === undefined ? (
+          <AgentTemplatePicker onPick={setStart} />
         ) : editing ? (
           <AgentEditor
-            key={selected}
+            key={selected === "new" ? `new:${start?.id ?? "blank"}` : selected}
             agent={current}
+            template={selected === "new" ? start : null}
             onSaved={(id) => setSelected(id)}
             onDeleted={() => setSelected(null)}
           />
@@ -952,7 +1021,7 @@ export function CodingAgentsScreen({ nav }: CodingAgentsScreenProps) {
             <p className="text-sm text-muted">
               {items.length ? "Pick an agent to edit it." : "No agents yet."}
             </p>
-            <Button onClick={() => setSelected("new")}>
+            <Button onClick={startNew}>
               <Plus className="size-4" aria-hidden /> New agent
             </Button>
           </Card>
