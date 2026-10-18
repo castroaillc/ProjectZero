@@ -1,0 +1,29 @@
+{
+  "name": "web",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node ../../scripts/with-env.mjs next dev --port \\$WEB_PORT",
+    "build": "node ../../scripts/with-env.mjs next build",
+    "start": "node ../../scripts/with-env.mjs next start --port \\$WEB_PORT",
+    "typecheck": "next typegen && tsc --noEmit"
+  },
+  "dependencies": {
+    "@projectzero/api-client": "workspace:*",
+    "@projectzero/auth": "workspace:*",
+    "@projectzero/ui-web": "workspace:*",
+    "@tanstack/react-query": "5.104.3",
+    "next": "16.4.2",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  },
+  "devDependencies": {
+    "@projectzero/config": "workspace:*",
+    "@tailwindcss/postcss": "4.3.3",
+    "@types/node": "26.6.5",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "tailwindcss": "4.3.3"
+  }
+}
