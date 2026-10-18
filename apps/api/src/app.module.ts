@@ -5,6 +5,7 @@ import type { Db } from "@projectzero/db";
 import { AuthModule } from "@thallesp/nestjs-better-auth";
 import { ZodSerializerInterceptor, ZodValidationPipe } from "nestjs-zod";
 import { AgentModule } from "./agent/agent.module";
+import { CodingAgentsModule } from "./coding-agents/coding-agents.module";
 import { ConfigModule, ENV } from "./config/config.module";
 import { trustedOrigins, type Env } from "./config/env";
 import { DB, DbModule } from "./db/db.module";
@@ -31,6 +32,7 @@ import { TodosModule } from "./todos/todos.module";
     HealthModule,
     TodosModule,
     AgentModule,
+    CodingAgentsModule,
   ],
   providers: [
     { provide: APP_PIPE, useClass: ZodValidationPipe },

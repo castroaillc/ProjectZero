@@ -588,6 +588,223 @@
         ]
       }
     },
+    "/v1/coding-agents": {
+      "get": {
+        "operationId": "listCodingAgents",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CodingAgentDto_Output"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session."
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the signed-in user's coding agents, newest first.",
+        "tags": [
+          "coding-agents"
+        ]
+      },
+      "post": {
+        "operationId": "createCodingAgent",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCodingAgentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CodingAgentDto_Output"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session."
+          },
+          "409": {
+            "description": "An agent with this name already exists."
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a coding agent: model, sandbox, tools, MCP servers and skills.",
+        "tags": [
+          "coding-agents"
+        ]
+      }
+    },
+    "/v1/coding-agents/{id}": {
+      "get": {
+        "operationId": "getCodingAgent",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CodingAgentDto_Output"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session."
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get one coding agent's configuration.",
+        "tags": [
+          "coding-agents"
+        ]
+      },
+      "patch": {
+        "operationId": "updateCodingAgent",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCodingAgentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CodingAgentDto_Output"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session."
+          },
+          "404": {
+            "description": ""
+          },
+          "409": {
+            "description": "An agent with this name already exists."
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Change a coding agent. Each field sent replaces the stored value as a whole.",
+        "tags": [
+          "coding-agents"
+        ]
+      },
+      "delete": {
+        "operationId": "deleteCodingAgent",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "401": {
+            "description": "No valid session."
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete a coding agent.",
+        "tags": [
+          "coding-agents"
+        ]
+      }
+    },
     "/api/auth/sign-in/social": {
       "post": {
         "tags": [
@@ -6270,6 +6487,1185 @@
           }
         },
         "description": "Start a run with a message, or resume one waiting for approval."
+      },
+      "CodingAgentDto_Output": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "description": "Unique identifier of the agent."
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "description": "Display name, unique per user."
+          },
+          "description": {
+            "type": "string",
+            "default": "",
+            "maxLength": 500,
+            "description": "What this agent is for."
+          },
+          "systemPrompt": {
+            "type": "string",
+            "default": "",
+            "maxLength": 20000,
+            "description": "Extra instructions appended to the harness's base prompt."
+          },
+          "model": {
+            "type": "object",
+            "properties": {
+              "provider": {
+                "type": "string",
+                "enum": [
+                  "ollama",
+                  "anthropic",
+                  "openai"
+                ],
+                "description": "Who serves the model."
+              },
+              "model": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200,
+                "description": "Model ID or Ollama tag, e.g. gpt-oss:20b."
+              },
+              "baseUrl": {
+                "description": "Server URL. Ollama defaults to the API's OLLAMA_BASE_URL; others to the vendor.",
+                "type": "string",
+                "format": "uri"
+              },
+              "apiKeyEnv": {
+                "description": "Name of the server env var holding the API key. The key itself is never stored.",
+                "type": "string",
+                "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+              },
+              "temperature": {
+                "description": "Sampling temperature.",
+                "type": "number",
+                "minimum": 0,
+                "maximum": 2
+              },
+              "maxTokens": {
+                "description": "Max output tokens per turn.",
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 200000
+              }
+            },
+            "required": [
+              "provider",
+              "model"
+            ],
+            "additionalProperties": false,
+            "description": "The chat model the agent runs on. It must support tool calling."
+          },
+          "sandbox": {
+            "type": "object",
+            "properties": {
+              "image": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 255,
+                "pattern": "^[\\w][\\w.\\-/:@]*$",
+                "description": "Docker image the sandbox container starts from."
+              },
+              "workdir": {
+                "default": "/workspace",
+                "description": "Working directory inside the container; the repo is cloned here.",
+                "type": "string",
+                "pattern": "^\\/[^\\0]*$"
+              },
+              "repo": {
+                "description": "Repository to clone into the workdir before the agent starts.",
+                "type": "object",
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "Git URL to clone."
+                  },
+                  "ref": {
+                    "description": "Branch, tag or commit to check out.",
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 255
+                  }
+                },
+                "required": [
+                  "url"
+                ],
+                "additionalProperties": false
+              },
+              "setupCommands": {
+                "default": [],
+                "description": "Shell commands run in the workdir after cloning, e.g. `pnpm install`.",
+                "maxItems": 20,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 2000
+                }
+              },
+              "network": {
+                "default": "bridge",
+                "description": "`none` cuts the container off from the network; `bridge` allows outbound.",
+                "type": "string",
+                "enum": [
+                  "none",
+                  "bridge"
+                ]
+              },
+              "cpus": {
+                "default": 2,
+                "description": "CPU limit.",
+                "type": "number",
+                "minimum": 0.25,
+                "maximum": 16
+              },
+              "memoryMb": {
+                "default": 4096,
+                "description": "Memory limit in MiB.",
+                "type": "integer",
+                "minimum": 256,
+                "maximum": 65536
+              },
+              "timeoutSeconds": {
+                "default": 3600,
+                "description": "The container is stopped after this long.",
+                "type": "integer",
+                "minimum": 60,
+                "maximum": 86400
+              },
+              "env": {
+                "default": {},
+                "type": "object",
+                "propertyNames": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+                },
+                "additionalProperties": {
+                  "type": "string",
+                  "maxLength": 4000
+                },
+                "description": "Environment variables. Use `${NAME}` to read a secret from the server instead."
+              }
+            },
+            "required": [
+              "image",
+              "workdir",
+              "setupCommands",
+              "network",
+              "cpus",
+              "memoryMb",
+              "timeoutSeconds",
+              "env"
+            ],
+            "additionalProperties": false,
+            "description": "The Docker container the agent's tools run in."
+          },
+          "tools": {
+            "type": "array",
+            "default": [
+              {
+                "name": "bash",
+                "approval": "auto"
+              },
+              {
+                "name": "read_file",
+                "approval": "auto"
+              },
+              {
+                "name": "write_file",
+                "approval": "auto"
+              },
+              {
+                "name": "edit_file",
+                "approval": "auto"
+              },
+              {
+                "name": "list_files",
+                "approval": "auto"
+              },
+              {
+                "name": "grep",
+                "approval": "auto"
+              }
+            ],
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "enum": [
+                    "bash",
+                    "read_file",
+                    "write_file",
+                    "edit_file",
+                    "list_files",
+                    "grep"
+                  ],
+                  "description": "Built-in tool."
+                },
+                "approval": {
+                  "default": "auto",
+                  "description": "`ask` pauses the run for the user's approval before each call.",
+                  "type": "string",
+                  "enum": [
+                    "auto",
+                    "ask"
+                  ]
+                }
+              },
+              "required": [
+                "name",
+                "approval"
+              ],
+              "additionalProperties": false,
+              "description": "A built-in tool the agent may use."
+            },
+            "description": "Built-in tools the agent may use. Defaults to all of them."
+          },
+          "mcpServers": {
+            "type": "array",
+            "default": [],
+            "maxItems": 20,
+            "items": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64,
+                      "pattern": "^[a-z0-9][a-z0-9_-]*$",
+                      "description": "Server name; tools are exposed to the model as <name>__<tool>."
+                    },
+                    "approval": {
+                      "default": "ask",
+                      "description": "`ask` pauses the run for approval before each of this server's tool calls.",
+                      "type": "string",
+                      "enum": [
+                        "auto",
+                        "ask"
+                      ]
+                    },
+                    "transport": {
+                      "type": "string",
+                      "const": "stdio",
+                      "description": "Started as a process inside the sandbox."
+                    },
+                    "command": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 500,
+                      "description": "Executable, e.g. npx."
+                    },
+                    "args": {
+                      "default": [],
+                      "description": "Arguments.",
+                      "maxItems": 50,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "maxLength": 2000
+                      }
+                    },
+                    "env": {
+                      "default": {},
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+                      },
+                      "additionalProperties": {
+                        "type": "string",
+                        "maxLength": 4000
+                      },
+                      "description": "Environment variables. Use `${NAME}` to read a secret from the server instead."
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "approval",
+                    "transport",
+                    "command",
+                    "args",
+                    "env"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64,
+                      "pattern": "^[a-z0-9][a-z0-9_-]*$",
+                      "description": "Server name; tools are exposed to the model as <name>__<tool>."
+                    },
+                    "approval": {
+                      "default": "ask",
+                      "description": "`ask` pauses the run for approval before each of this server's tool calls.",
+                      "type": "string",
+                      "enum": [
+                        "auto",
+                        "ask"
+                      ]
+                    },
+                    "transport": {
+                      "type": "string",
+                      "const": "http",
+                      "description": "Reached over Streamable HTTP from the harness."
+                    },
+                    "url": {
+                      "type": "string",
+                      "format": "uri",
+                      "description": "MCP endpoint URL."
+                    },
+                    "headers": {
+                      "default": {},
+                      "description": "Request headers. Use `${NAME}` to read a token from the server env.",
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 200
+                      },
+                      "additionalProperties": {
+                        "type": "string",
+                        "maxLength": 4000
+                      }
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "approval",
+                    "transport",
+                    "url",
+                    "headers"
+                  ],
+                  "additionalProperties": false
+                }
+              ],
+              "description": "An MCP server whose tools the agent can call."
+            },
+            "description": "MCP servers the agent can call."
+          },
+          "skills": {
+            "type": "array",
+            "default": [],
+            "maxItems": 50,
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64,
+                  "pattern": "^[a-z0-9][a-z0-9_-]*$",
+                  "description": "Skill name the model uses to load it."
+                },
+                "description": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 1024,
+                  "description": "When to use the skill. The model sees this up front and loads the rest on demand."
+                },
+                "instructions": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100000,
+                  "description": "Markdown body of the skill (the SKILL.md content below the frontmatter)."
+                }
+              },
+              "required": [
+                "name",
+                "description",
+                "instructions"
+              ],
+              "additionalProperties": false,
+              "description": "Instructions the agent loads when a task calls for them."
+            },
+            "description": "Skills the agent can load."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+            "description": "When the agent was created (ISO 8601)."
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+            "description": "When the agent was last changed (ISO 8601)."
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "description",
+          "systemPrompt",
+          "model",
+          "sandbox",
+          "tools",
+          "mcpServers",
+          "skills",
+          "createdAt",
+          "updatedAt"
+        ],
+        "description": "A coding agent: model, sandbox, tools, MCP servers and skills.",
+        "additionalProperties": false
+      },
+      "CreateCodingAgentDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "description": "Display name, unique per user."
+          },
+          "description": {
+            "default": "",
+            "type": "string",
+            "maxLength": 500,
+            "description": "What this agent is for."
+          },
+          "systemPrompt": {
+            "default": "",
+            "type": "string",
+            "maxLength": 20000,
+            "description": "Extra instructions appended to the harness's base prompt."
+          },
+          "model": {
+            "type": "object",
+            "properties": {
+              "provider": {
+                "type": "string",
+                "enum": [
+                  "ollama",
+                  "anthropic",
+                  "openai"
+                ],
+                "description": "Who serves the model."
+              },
+              "model": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200,
+                "description": "Model ID or Ollama tag, e.g. gpt-oss:20b."
+              },
+              "baseUrl": {
+                "description": "Server URL. Ollama defaults to the API's OLLAMA_BASE_URL; others to the vendor.",
+                "type": "string",
+                "format": "uri"
+              },
+              "apiKeyEnv": {
+                "description": "Name of the server env var holding the API key. The key itself is never stored.",
+                "type": "string",
+                "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+              },
+              "temperature": {
+                "description": "Sampling temperature.",
+                "type": "number",
+                "minimum": 0,
+                "maximum": 2
+              },
+              "maxTokens": {
+                "description": "Max output tokens per turn.",
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 200000
+              }
+            },
+            "required": [
+              "provider",
+              "model"
+            ],
+            "description": "The chat model the agent runs on. It must support tool calling."
+          },
+          "sandbox": {
+            "type": "object",
+            "properties": {
+              "image": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 255,
+                "pattern": "^[\\w][\\w.\\-/:@]*$",
+                "description": "Docker image the sandbox container starts from."
+              },
+              "workdir": {
+                "default": "/workspace",
+                "description": "Working directory inside the container; the repo is cloned here.",
+                "type": "string",
+                "pattern": "^\\/[^\\0]*$"
+              },
+              "repo": {
+                "description": "Repository to clone into the workdir before the agent starts.",
+                "type": "object",
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "Git URL to clone."
+                  },
+                  "ref": {
+                    "description": "Branch, tag or commit to check out.",
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 255
+                  }
+                },
+                "required": [
+                  "url"
+                ]
+              },
+              "setupCommands": {
+                "default": [],
+                "description": "Shell commands run in the workdir after cloning, e.g. `pnpm install`.",
+                "maxItems": 20,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 2000
+                }
+              },
+              "network": {
+                "default": "bridge",
+                "description": "`none` cuts the container off from the network; `bridge` allows outbound.",
+                "type": "string",
+                "enum": [
+                  "none",
+                  "bridge"
+                ]
+              },
+              "cpus": {
+                "default": 2,
+                "description": "CPU limit.",
+                "type": "number",
+                "minimum": 0.25,
+                "maximum": 16
+              },
+              "memoryMb": {
+                "default": 4096,
+                "description": "Memory limit in MiB.",
+                "type": "integer",
+                "minimum": 256,
+                "maximum": 65536
+              },
+              "timeoutSeconds": {
+                "default": 3600,
+                "description": "The container is stopped after this long.",
+                "type": "integer",
+                "minimum": 60,
+                "maximum": 86400
+              },
+              "env": {
+                "default": {},
+                "type": "object",
+                "propertyNames": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+                },
+                "additionalProperties": {
+                  "type": "string",
+                  "maxLength": 4000
+                },
+                "description": "Environment variables. Use `${NAME}` to read a secret from the server instead."
+              }
+            },
+            "required": [
+              "image"
+            ],
+            "description": "The Docker container the agent's tools run in."
+          },
+          "tools": {
+            "default": [
+              {
+                "name": "bash",
+                "approval": "auto"
+              },
+              {
+                "name": "read_file",
+                "approval": "auto"
+              },
+              {
+                "name": "write_file",
+                "approval": "auto"
+              },
+              {
+                "name": "edit_file",
+                "approval": "auto"
+              },
+              {
+                "name": "list_files",
+                "approval": "auto"
+              },
+              {
+                "name": "grep",
+                "approval": "auto"
+              }
+            ],
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "enum": [
+                    "bash",
+                    "read_file",
+                    "write_file",
+                    "edit_file",
+                    "list_files",
+                    "grep"
+                  ],
+                  "description": "Built-in tool."
+                },
+                "approval": {
+                  "default": "auto",
+                  "description": "`ask` pauses the run for the user's approval before each call.",
+                  "type": "string",
+                  "enum": [
+                    "auto",
+                    "ask"
+                  ]
+                }
+              },
+              "required": [
+                "name"
+              ],
+              "description": "A built-in tool the agent may use."
+            },
+            "description": "Built-in tools the agent may use. Defaults to all of them."
+          },
+          "mcpServers": {
+            "default": [],
+            "maxItems": 20,
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64,
+                      "pattern": "^[a-z0-9][a-z0-9_-]*$",
+                      "description": "Server name; tools are exposed to the model as <name>__<tool>."
+                    },
+                    "approval": {
+                      "default": "ask",
+                      "description": "`ask` pauses the run for approval before each of this server's tool calls.",
+                      "type": "string",
+                      "enum": [
+                        "auto",
+                        "ask"
+                      ]
+                    },
+                    "transport": {
+                      "type": "string",
+                      "const": "stdio",
+                      "description": "Started as a process inside the sandbox."
+                    },
+                    "command": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 500,
+                      "description": "Executable, e.g. npx."
+                    },
+                    "args": {
+                      "default": [],
+                      "description": "Arguments.",
+                      "maxItems": 50,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "maxLength": 2000
+                      }
+                    },
+                    "env": {
+                      "default": {},
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+                      },
+                      "additionalProperties": {
+                        "type": "string",
+                        "maxLength": 4000
+                      },
+                      "description": "Environment variables. Use `${NAME}` to read a secret from the server instead."
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "transport",
+                    "command"
+                  ]
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64,
+                      "pattern": "^[a-z0-9][a-z0-9_-]*$",
+                      "description": "Server name; tools are exposed to the model as <name>__<tool>."
+                    },
+                    "approval": {
+                      "default": "ask",
+                      "description": "`ask` pauses the run for approval before each of this server's tool calls.",
+                      "type": "string",
+                      "enum": [
+                        "auto",
+                        "ask"
+                      ]
+                    },
+                    "transport": {
+                      "type": "string",
+                      "const": "http",
+                      "description": "Reached over Streamable HTTP from the harness."
+                    },
+                    "url": {
+                      "type": "string",
+                      "format": "uri",
+                      "description": "MCP endpoint URL."
+                    },
+                    "headers": {
+                      "default": {},
+                      "description": "Request headers. Use `${NAME}` to read a token from the server env.",
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 200
+                      },
+                      "additionalProperties": {
+                        "type": "string",
+                        "maxLength": 4000
+                      }
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "transport",
+                    "url"
+                  ]
+                }
+              ],
+              "description": "An MCP server whose tools the agent can call."
+            },
+            "description": "MCP servers the agent can call."
+          },
+          "skills": {
+            "default": [],
+            "maxItems": 50,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64,
+                  "pattern": "^[a-z0-9][a-z0-9_-]*$",
+                  "description": "Skill name the model uses to load it."
+                },
+                "description": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 1024,
+                  "description": "When to use the skill. The model sees this up front and loads the rest on demand."
+                },
+                "instructions": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100000,
+                  "description": "Markdown body of the skill (the SKILL.md content below the frontmatter)."
+                }
+              },
+              "required": [
+                "name",
+                "description",
+                "instructions"
+              ],
+              "description": "Instructions the agent loads when a task calls for them."
+            },
+            "description": "Skills the agent can load."
+          }
+        },
+        "required": [
+          "name",
+          "model",
+          "sandbox"
+        ],
+        "description": "Fields for creating a coding agent."
+      },
+      "UpdateCodingAgentDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "description": "Display name, unique per user."
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 500,
+            "description": "What this agent is for."
+          },
+          "systemPrompt": {
+            "type": "string",
+            "maxLength": 20000,
+            "description": "Extra instructions appended to the harness's base prompt."
+          },
+          "model": {
+            "type": "object",
+            "properties": {
+              "provider": {
+                "type": "string",
+                "enum": [
+                  "ollama",
+                  "anthropic",
+                  "openai"
+                ],
+                "description": "Who serves the model."
+              },
+              "model": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200,
+                "description": "Model ID or Ollama tag, e.g. gpt-oss:20b."
+              },
+              "baseUrl": {
+                "description": "Server URL. Ollama defaults to the API's OLLAMA_BASE_URL; others to the vendor.",
+                "type": "string",
+                "format": "uri"
+              },
+              "apiKeyEnv": {
+                "description": "Name of the server env var holding the API key. The key itself is never stored.",
+                "type": "string",
+                "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+              },
+              "temperature": {
+                "description": "Sampling temperature.",
+                "type": "number",
+                "minimum": 0,
+                "maximum": 2
+              },
+              "maxTokens": {
+                "description": "Max output tokens per turn.",
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 200000
+              }
+            },
+            "required": [
+              "provider",
+              "model"
+            ],
+            "description": "The chat model the agent runs on. It must support tool calling."
+          },
+          "sandbox": {
+            "type": "object",
+            "properties": {
+              "image": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 255,
+                "pattern": "^[\\w][\\w.\\-/:@]*$",
+                "description": "Docker image the sandbox container starts from."
+              },
+              "workdir": {
+                "default": "/workspace",
+                "description": "Working directory inside the container; the repo is cloned here.",
+                "type": "string",
+                "pattern": "^\\/[^\\0]*$"
+              },
+              "repo": {
+                "description": "Repository to clone into the workdir before the agent starts.",
+                "type": "object",
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "Git URL to clone."
+                  },
+                  "ref": {
+                    "description": "Branch, tag or commit to check out.",
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 255
+                  }
+                },
+                "required": [
+                  "url"
+                ]
+              },
+              "setupCommands": {
+                "default": [],
+                "description": "Shell commands run in the workdir after cloning, e.g. `pnpm install`.",
+                "maxItems": 20,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 2000
+                }
+              },
+              "network": {
+                "default": "bridge",
+                "description": "`none` cuts the container off from the network; `bridge` allows outbound.",
+                "type": "string",
+                "enum": [
+                  "none",
+                  "bridge"
+                ]
+              },
+              "cpus": {
+                "default": 2,
+                "description": "CPU limit.",
+                "type": "number",
+                "minimum": 0.25,
+                "maximum": 16
+              },
+              "memoryMb": {
+                "default": 4096,
+                "description": "Memory limit in MiB.",
+                "type": "integer",
+                "minimum": 256,
+                "maximum": 65536
+              },
+              "timeoutSeconds": {
+                "default": 3600,
+                "description": "The container is stopped after this long.",
+                "type": "integer",
+                "minimum": 60,
+                "maximum": 86400
+              },
+              "env": {
+                "default": {},
+                "type": "object",
+                "propertyNames": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+                },
+                "additionalProperties": {
+                  "type": "string",
+                  "maxLength": 4000
+                },
+                "description": "Environment variables. Use `${NAME}` to read a secret from the server instead."
+              }
+            },
+            "required": [
+              "image"
+            ],
+            "description": "The Docker container the agent's tools run in."
+          },
+          "tools": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "enum": [
+                    "bash",
+                    "read_file",
+                    "write_file",
+                    "edit_file",
+                    "list_files",
+                    "grep"
+                  ],
+                  "description": "Built-in tool."
+                },
+                "approval": {
+                  "default": "auto",
+                  "description": "`ask` pauses the run for the user's approval before each call.",
+                  "type": "string",
+                  "enum": [
+                    "auto",
+                    "ask"
+                  ]
+                }
+              },
+              "required": [
+                "name"
+              ],
+              "description": "A built-in tool the agent may use."
+            },
+            "description": "Built-in tools the agent may use. Defaults to all of them."
+          },
+          "mcpServers": {
+            "maxItems": 20,
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64,
+                      "pattern": "^[a-z0-9][a-z0-9_-]*$",
+                      "description": "Server name; tools are exposed to the model as <name>__<tool>."
+                    },
+                    "approval": {
+                      "default": "ask",
+                      "description": "`ask` pauses the run for approval before each of this server's tool calls.",
+                      "type": "string",
+                      "enum": [
+                        "auto",
+                        "ask"
+                      ]
+                    },
+                    "transport": {
+                      "type": "string",
+                      "const": "stdio",
+                      "description": "Started as a process inside the sandbox."
+                    },
+                    "command": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 500,
+                      "description": "Executable, e.g. npx."
+                    },
+                    "args": {
+                      "default": [],
+                      "description": "Arguments.",
+                      "maxItems": 50,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "maxLength": 2000
+                      }
+                    },
+                    "env": {
+                      "default": {},
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+                      },
+                      "additionalProperties": {
+                        "type": "string",
+                        "maxLength": 4000
+                      },
+                      "description": "Environment variables. Use `${NAME}` to read a secret from the server instead."
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "transport",
+                    "command"
+                  ]
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64,
+                      "pattern": "^[a-z0-9][a-z0-9_-]*$",
+                      "description": "Server name; tools are exposed to the model as <name>__<tool>."
+                    },
+                    "approval": {
+                      "default": "ask",
+                      "description": "`ask` pauses the run for approval before each of this server's tool calls.",
+                      "type": "string",
+                      "enum": [
+                        "auto",
+                        "ask"
+                      ]
+                    },
+                    "transport": {
+                      "type": "string",
+                      "const": "http",
+                      "description": "Reached over Streamable HTTP from the harness."
+                    },
+                    "url": {
+                      "type": "string",
+                      "format": "uri",
+                      "description": "MCP endpoint URL."
+                    },
+                    "headers": {
+                      "default": {},
+                      "description": "Request headers. Use `${NAME}` to read a token from the server env.",
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 200
+                      },
+                      "additionalProperties": {
+                        "type": "string",
+                        "maxLength": 4000
+                      }
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "transport",
+                    "url"
+                  ]
+                }
+              ],
+              "description": "An MCP server whose tools the agent can call."
+            },
+            "description": "MCP servers the agent can call."
+          },
+          "skills": {
+            "maxItems": 50,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64,
+                  "pattern": "^[a-z0-9][a-z0-9_-]*$",
+                  "description": "Skill name the model uses to load it."
+                },
+                "description": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 1024,
+                  "description": "When to use the skill. The model sees this up front and loads the rest on demand."
+                },
+                "instructions": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100000,
+                  "description": "Markdown body of the skill (the SKILL.md content below the frontmatter)."
+                }
+              },
+              "required": [
+                "name",
+                "description",
+                "instructions"
+              ],
+              "description": "Instructions the agent loads when a task calls for them."
+            },
+            "description": "Skills the agent can load."
+          }
+        },
+        "description": "Fields to change on a coding agent; each replaces the stored value as a whole."
       }
     }
   }
