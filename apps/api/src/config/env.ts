@@ -21,6 +21,9 @@ export const EnvSchema = z.object({
   BETTER_AUTH_URL: z.url(),
   /** Extra comma-separated origins allowed by CORS and Better Auth. */
   TRUSTED_ORIGINS: csv,
+  /** Ollama model the agent runs on; must support tool calling. */
+  AGENT_MODEL: z.string().default("gpt-oss:20b"),
+  OLLAMA_BASE_URL: z.url().default("http://localhost:11434"),
 });
 
 export type Env = z.infer<typeof EnvSchema>;

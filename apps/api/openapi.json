@@ -381,6 +381,213 @@
         ]
       }
     },
+    "/v1/agent/threads": {
+      "post": {
+        "operationId": "createAgentThread",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAgentThreadDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentThreadDto_Output"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session."
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Start a conversation with the todo agent.",
+        "tags": [
+          "agent"
+        ]
+      },
+      "get": {
+        "operationId": "listAgentThreads",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AgentThreadDto_Output"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session."
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the signed-in user's agent conversations.",
+        "tags": [
+          "agent"
+        ]
+      }
+    },
+    "/v1/agent/threads/{id}": {
+      "get": {
+        "operationId": "getAgentThread",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentThreadStateDto_Output"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session."
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a conversation's messages and any changes waiting for approval.",
+        "tags": [
+          "agent"
+        ]
+      },
+      "delete": {
+        "operationId": "deleteAgentThread",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "401": {
+            "description": "No valid session."
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete a conversation and its history.",
+        "tags": [
+          "agent"
+        ]
+      }
+    },
+    "/v1/agent/threads/{id}/runs": {
+      "post": {
+        "description": "Server-sent events, one JSON `AgentEvent` per `data:` line: `token`, `tool_call`, `tool_result`, `approval_required`, then `done` (or `error`). A run that ends with `approval_required` is paused; resume it with `{ resume: { approved } }`.",
+        "operationId": "streamAgentRun",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RunAgentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Event stream."
+          },
+          "401": {
+            "description": "No valid session."
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Send a message (or an approval decision) and stream the agent's response.",
+        "tags": [
+          "agent-stream"
+        ]
+      }
+    },
     "/api/auth/sign-in/social": {
       "post": {
         "tags": [
@@ -5880,6 +6087,189 @@
           }
         },
         "description": "Fields that can be changed on a todo."
+      },
+      "CreateAgentThreadDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "description": "Optional title.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        },
+        "description": "Fields for creating an agent thread."
+      },
+      "AgentThreadDto_Output": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "description": "Thread ID; also the LangGraph thread_id."
+          },
+          "title": {
+            "type": "string",
+            "description": "Short title, taken from the first message."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+            "description": "When the thread was created (ISO 8601)."
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "createdAt"
+        ],
+        "description": "A conversation with the todo agent.",
+        "additionalProperties": false
+      },
+      "AgentThreadStateDto_Output": {
+        "type": "object",
+        "properties": {
+          "messages": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "Message ID."
+                },
+                "role": {
+                  "type": "string",
+                  "enum": [
+                    "user",
+                    "assistant",
+                    "tool"
+                  ],
+                  "description": "Who produced the message."
+                },
+                "content": {
+                  "type": "string",
+                  "description": "Text content."
+                },
+                "toolCalls": {
+                  "description": "Tools the assistant asked to run.",
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "args": {
+                        "type": "object",
+                        "propertyNames": {
+                          "type": "string"
+                        },
+                        "additionalProperties": {}
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "name",
+                      "args"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "toolName": {
+                  "description": "For tool messages: which tool produced it.",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "role",
+                "content"
+              ],
+              "additionalProperties": false,
+              "description": "One message in an agent thread."
+            },
+            "description": "Conversation so far, oldest first."
+          },
+          "pendingApprovals": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "Interrupt ID."
+                },
+                "action": {
+                  "type": "string",
+                  "enum": [
+                    "create_todo",
+                    "update_todo",
+                    "delete_todo"
+                  ],
+                  "description": "Tool that wants to run."
+                },
+                "args": {
+                  "type": "object",
+                  "propertyNames": {
+                    "type": "string"
+                  },
+                  "additionalProperties": {},
+                  "description": "Arguments the agent wants to run it with."
+                },
+                "summary": {
+                  "type": "string",
+                  "description": "Human-readable description of the change."
+                }
+              },
+              "required": [
+                "id",
+                "action",
+                "args",
+                "summary"
+              ],
+              "additionalProperties": false,
+              "description": "A change the agent wants to make, pending approval."
+            },
+            "description": "Changes waiting for approval."
+          }
+        },
+        "required": [
+          "messages",
+          "pendingApprovals"
+        ],
+        "description": "Messages and pending approvals of an agent thread.",
+        "additionalProperties": false
+      },
+      "RunAgentDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "description": "The user's message.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4000
+          },
+          "resume": {
+            "description": "Decision for every pending approval.",
+            "type": "object",
+            "properties": {
+              "approved": {
+                "type": "boolean",
+                "description": "Whether to let the pending changes run."
+              }
+            },
+            "required": [
+              "approved"
+            ]
+          }
+        },
+        "description": "Start a run with a message, or resume one waiting for approval."
       }
     }
   }

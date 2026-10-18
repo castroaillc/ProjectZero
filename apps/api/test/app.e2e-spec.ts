@@ -1,42 +1,22 @@
 import "reflect-metadata";
 import type { INestApplication } from "@nestjs/common";
-import { Test } from "@nestjs/testing";
-import { createDb, loadRootEnv, user } from "@projectzero/db";
-import { inArray } from "drizzle-orm";
 import request from "supertest";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { AppModule } from "../src/app.module";
 import { buildOpenApiDocument } from "../src/openapi/document";
+import { createTestApp, signUp as signUpWith, testUsers } from "./helpers";
 
-// Runs against the worktree's own database (DATABASE_URL from the repo-root .env).
-loadRootEnv();
-
-const run = Date.now().toString(36);
-const emails = [`alice-${run}@e2e.test`, `bob-${run}@e2e.test`];
-
+const users = testUsers("app");
 let app: INestApplication;
 let http: ReturnType<typeof request>;
-
-async function signUp(email: string) {
-  const res = await http
-    .post("/api/auth/sign-up/email")
-    .send({ email, password: "correct-horse-battery", name: email.split("@")[0] })
-    .expect(200);
-  return { token: res.body.token as string, cookie: res.get("set-cookie") ?? [] };
-}
+const signUp = (email: string) => signUpWith(app, email);
 
 beforeAll(async () => {
-  const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
-  app = moduleRef.createNestApplication({ bodyParser: false, logger: ["error"] });
-  app.setGlobalPrefix("v1");
-  await app.init();
+  app = await createTestApp();
   http = request(app.getHttpServer());
 });
 
 afterAll(async () => {
-  const db = createDb(process.env.DATABASE_URL!, { max: 1 });
-  await db.delete(user).where(inArray(user.email, emails));
-  await db.$client.end();
+  await users.cleanup();
   await app?.close();
 });
 
@@ -54,8 +34,8 @@ describe("todos", () => {
   const asBob = (r: request.Test) => r.set("authorization", `Bearer ${bob.token}`);
 
   beforeAll(async () => {
-    alice = await signUp(emails[0]!);
-    bob = await signUp(emails[1]!);
+    alice = await signUp(users.email("alice"));
+    bob = await signUp(users.email("bob"));
   });
 
   it("rejects requests without a session", async () => {
