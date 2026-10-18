@@ -5,6 +5,7 @@
  * REST API shared by the ProjectZero web, desktop and mobile apps.
  * OpenAPI spec version: 1
  */
+import type { CodingAgentDtoOutputIdentity } from "./codingAgentDtoOutputIdentity";
 import type { CodingAgentDtoOutputMcpServersItem } from "./codingAgentDtoOutputMcpServersItem";
 import type { CodingAgentDtoOutputModel } from "./codingAgentDtoOutputModel";
 import type { CodingAgentDtoOutputSandbox } from "./codingAgentDtoOutputSandbox";
@@ -12,7 +13,7 @@ import type { CodingAgentDtoOutputSkillsItem } from "./codingAgentDtoOutputSkill
 import type { CodingAgentDtoOutputToolsItem } from "./codingAgentDtoOutputToolsItem";
 
 /**
- * A coding agent: model, sandbox, tools, MCP servers and skills.
+ * A coding agent: identity, model, sandbox, tools, MCP servers and skills.
  */
 export interface CodingAgentDtoOutput {
   /**
@@ -36,6 +37,8 @@ export interface CodingAgentDtoOutput {
    * @maxLength 20000
    */
   systemPrompt: string;
+  /** How the agent presents itself and who its work is attributed to. */
+  identity: CodingAgentDtoOutputIdentity;
   /** The chat model the agent runs on. It must support tool calling. */
   model: CodingAgentDtoOutputModel;
   /** The Docker container the agent's tools run in. */

@@ -5,6 +5,7 @@
  * REST API shared by the ProjectZero web, desktop and mobile apps.
  * OpenAPI spec version: 1
  */
+import type { UpdateCodingAgentDtoIdentity } from "./updateCodingAgentDtoIdentity";
 import type { UpdateCodingAgentDtoMcpServersItem } from "./updateCodingAgentDtoMcpServersItem";
 import type { UpdateCodingAgentDtoModel } from "./updateCodingAgentDtoModel";
 import type { UpdateCodingAgentDtoSandbox } from "./updateCodingAgentDtoSandbox";
@@ -31,6 +32,8 @@ export interface UpdateCodingAgentDto {
    * @maxLength 20000
    */
   systemPrompt?: string;
+  /** How the agent presents itself and who its work is attributed to. */
+  identity?: UpdateCodingAgentDtoIdentity;
   /** The chat model the agent runs on. It must support tool calling. */
   model?: UpdateCodingAgentDtoModel;
   /** The Docker container the agent's tools run in. */

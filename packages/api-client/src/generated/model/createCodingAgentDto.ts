@@ -5,6 +5,7 @@
  * REST API shared by the ProjectZero web, desktop and mobile apps.
  * OpenAPI spec version: 1
  */
+import type { CreateCodingAgentDtoIdentity } from "./createCodingAgentDtoIdentity";
 import type { CreateCodingAgentDtoMcpServersItem } from "./createCodingAgentDtoMcpServersItem";
 import type { CreateCodingAgentDtoModel } from "./createCodingAgentDtoModel";
 import type { CreateCodingAgentDtoSandbox } from "./createCodingAgentDtoSandbox";
@@ -31,6 +32,8 @@ export interface CreateCodingAgentDto {
    * @maxLength 20000
    */
   systemPrompt?: string;
+  /** How the agent presents itself and who its work is attributed to. */
+  identity?: CreateCodingAgentDtoIdentity;
   /** The chat model the agent runs on. It must support tool calling. */
   model: CreateCodingAgentDtoModel;
   /** The Docker container the agent's tools run in. */
