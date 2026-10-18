@@ -1,0 +1,39 @@
+{
+  "name": "@projectzero/auth",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.cts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "auth:generate": "pnpm dlx @better-auth/cli@1.4.21 generate --config scripts/cli.config.ts --output better-auth-schema.gen.ts --yes"
+  },
+  "dependencies": {
+    "@projectzero/db": "workspace:*",
+    "better-auth": "1.7.10",
+    "drizzle-orm": "0.45.4"
+  },
+  "devDependencies": {
+    "@projectzero/config": "workspace:*",
+    "tsup": "9.0.0"
+  }
+}

@@ -1,5 +1,8 @@
 import { z } from "zod";
 
+// Root schemas use `.describe()`, not `.meta({ id })`: nestjs-zod 5.5 turns a DTO whose root
+// schema has an `id` into a self-referencing component. OpenAPI names come from the DTO classes.
+
 /** A todo item owned by a single user. */
 export const TodoSchema = z
   .object({
@@ -10,18 +13,17 @@ export const TodoSchema = z
     createdAt: z.iso.datetime().describe("When the todo was created (ISO 8601)."),
     updatedAt: z.iso.datetime().describe("When the todo was last changed (ISO 8601)."),
   })
-  .meta({ id: "Todo", description: "A todo item owned by a single user." });
+  .describe("A todo item owned by a single user.");
 
 /** Body for creating a todo. */
-export const CreateTodoSchema = TodoSchema.pick({ title: true }).meta({
-  id: "CreateTodo",
-  description: "Fields required to create a todo.",
-});
+export const CreateTodoSchema = TodoSchema.pick({ title: true }).describe(
+  "Fields required to create a todo.",
+);
 
 /** Body for updating a todo; every field is optional. */
 export const UpdateTodoSchema = TodoSchema.pick({ title: true, completed: true })
   .partial()
-  .meta({ id: "UpdateTodo", description: "Fields that can be changed on a todo." });
+  .describe("Fields that can be changed on a todo.");
 
 export type Todo = z.infer<typeof TodoSchema>;
 export type CreateTodo = z.infer<typeof CreateTodoSchema>;

@@ -5,6 +5,22 @@ packages:
 # Expo/Metro resolves native modules more reliably with a hoisted layout.
 nodeLinker: hoisted
 
+# Peers are declared explicitly; auto-installing them pulled every optional Better Auth
+# adapter (Prisma, SQLite, an old drizzle-orm) into the graph.
+autoInstallPeers: false
+
 # Dependencies allowed to run install scripts.
 allowBuilds:
   esbuild: true
+  "@swc/core": true
+  # Install-time analytics ping; not needed.
+  "@scarf/scarf": false
+
+peerDependencyRules:
+  # better-auth lists vitest as an optional peer, which links vitest (and its vite peer) into
+  # packages that never run tests. apps/api provides vite where tests actually run.
+  ignoreMissing:
+    - vite
+  allowedVersions:
+    # Only `swc --watch` needs chokidar 5; Nest CLI does its own watching with chokidar 4.
+    "@swc/cli>chokidar": "4"

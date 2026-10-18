@@ -1,0 +1,17 @@
+{
+  "extends": "@projectzero/config/tsconfig/node.json",
+  "compilerOptions": {
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "target": "ES2023",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "noEmit": false,
+    "outDir": "dist",
+    "rootDir": "src",
+    "declaration": false,
+    "sourceMap": true,
+    "isolatedModules": false
+  },
+  "include": ["src"]
+}

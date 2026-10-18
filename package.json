@@ -15,7 +15,9 @@
     "db:migrate": "turbo run db:migrate",
     "db:seed": "turbo run db:seed",
     "wt": "tsx scripts/wt.ts",
-    "prepare": "husky"
+    "prepare": "husky",
+    "test:e2e": "turbo run test:e2e",
+    "api:gen": "turbo run api:gen"
   },
   "devDependencies": {
     "@commitlint/cli": "21.2.3",

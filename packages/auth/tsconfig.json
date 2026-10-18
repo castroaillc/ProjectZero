@@ -1,0 +1,4 @@
+{
+  "extends": "@projectzero/config/tsconfig/node.json",
+  "include": ["src", "scripts", "tsup.config.ts"]
+}
