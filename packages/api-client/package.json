@@ -1,0 +1,30 @@
+{
+  "name": "@projectzero/api-client",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "api:gen": "orval",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "5.104.3",
+    "@projectzero/shared": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": ">=19"
+  },
+  "devDependencies": {
+    "@projectzero/config": "workspace:*",
+    "@types/react": "19.3.0",
+    "orval": "8.43.0",
+    "react": "19.3.1",
+    "api": "workspace:*",
+    "vitest": "5.0.5",
+    "vite": "8.3.4"
+  }
+}

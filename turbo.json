@@ -34,9 +34,8 @@
       "cache": false
     },
     "api:gen": {
-      "dependsOn": ["^build"],
-      "inputs": ["src/**", "../../packages/shared/src/**", "../../packages/auth/src/**"],
-      "outputs": ["openapi.json"]
+      "dependsOn": ["^build", "^api:gen"],
+      "outputs": ["openapi.json", "src/generated/**"]
     },
     "test:e2e": {
       "dependsOn": ["^build"],

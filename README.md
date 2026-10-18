@@ -18,6 +18,7 @@ pnpm dev
 
   ```sh
   pnpm wt new web          # ../project0.worktrees/web on feat/web
+  pnpm wt new agent --from feat/api   # stack on an unmerged branch
   pnpm wt ls
   pnpm wt rm web
   ```

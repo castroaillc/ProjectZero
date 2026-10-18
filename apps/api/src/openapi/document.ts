@@ -10,14 +10,16 @@ import { cleanupOpenApiDoc } from "nestjs-zod";
  * decorators) merged with Better Auth's own endpoints under `/api/auth`.
  */
 export async function buildOpenApiDocument(app: INestApplication): Promise<OpenAPIObject> {
+  // 3.1: Better Auth's schemas use 3.1 JSON Schema features (type arrays, propertyNames).
   const config = new DocumentBuilder()
+    .setOpenAPIVersion("3.1.0")
     .setTitle("ProjectZero API")
     .setDescription("REST API shared by the ProjectZero web, desktop and mobile apps.")
     .setVersion("1")
     .addBearerAuth()
     .addCookieAuth("better-auth.session_token")
     .build();
-  const doc = cleanupOpenApiDoc(SwaggerModule.createDocument(app, config));
+  const doc = cleanupOpenApiDoc(SwaggerModule.createDocument(app, config), { version: "3.1" });
 
   const auth = app.get<AuthService<Auth>>(AuthService);
   const authDoc = (await auth.api.generateOpenAPISchema()) as unknown as OpenAPIObject;

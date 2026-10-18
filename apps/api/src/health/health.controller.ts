@@ -1,5 +1,5 @@
 import { Controller, Get, Inject } from "@nestjs/common";
-import { ApiTags } from "@nestjs/swagger";
+import { ApiOperation, ApiTags } from "@nestjs/swagger";
 import { HealthCheck, HealthCheckService, HealthIndicatorService } from "@nestjs/terminus";
 import type { Db } from "@projectzero/db";
 import { AllowAnonymous } from "@thallesp/nestjs-better-auth";
@@ -16,7 +16,10 @@ export class HealthController {
     @Inject(DB) private readonly db: Db,
   ) {}
 
-  /** Reports whether the API is up and can reach the database. */
+  @ApiOperation({
+    operationId: "checkHealth",
+    summary: "Report whether the API is up and can reach the database.",
+  })
   @Get()
   @HealthCheck()
   check() {
