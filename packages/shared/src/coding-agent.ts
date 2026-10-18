@@ -1,9 +1,10 @@
 import { z } from "zod";
+import { CredentialNameSchema, credentialRefs } from "./credential";
 
-// A coding agent is a saved configuration: its identity, which model it runs on, the Docker
-// sandbox it works in, which built-in tools it may use, the MCP servers it can reach and the
-// skills it can load. Running one is a separate step; these schemas only describe and validate
-// the configuration.
+// A coding agent is a saved configuration: whose credentials it acts with (identity), how it
+// presents itself (persona), which model it runs on, the Docker sandbox it works in, which
+// built-in tools it may use, the MCP servers it can reach and the skills it can load. Running one
+// is a separate step; these schemas only describe and validate the configuration.
 
 /** Lowercase identifier used for MCP server and skill names (also how the model refers to them). */
 const slug = z
@@ -16,10 +17,10 @@ const envName = z
   .string()
   .regex(/^[A-Za-z_][A-Za-z0-9_]*$/, "Must be a valid environment variable name.");
 
-/** Plain environment variables. Values may reference a server env var as `${NAME}`. */
+/** Plain environment variables. Values may insert a credential as `${NAME}`. */
 const envVars = z
   .record(envName, z.string().max(4000))
-  .describe("Environment variables. Use `${NAME}` to read a secret from the server instead.");
+  .describe("Environment variables. Use `${NAME}` to insert a credential instead of a secret.");
 
 /** Rejects arrays where two items share a name, pointing the error at the duplicate. */
 function uniqueNames<T extends { name: string }>(items: T[], ctx: z.RefinementCtx) {
@@ -45,18 +46,18 @@ export const ModelConfigSchema = z
       .url()
       .optional()
       .describe("Server URL. Ollama defaults to the API's OLLAMA_BASE_URL; others to the vendor."),
-    apiKeyEnv: envName
-      .optional()
-      .describe("Name of the server env var holding the API key. The key itself is never stored."),
+    apiKeyCredential: CredentialNameSchema.optional().describe(
+      "Name of the credential holding the API key.",
+    ),
     temperature: z.number().min(0).max(2).optional().describe("Sampling temperature."),
     maxTokens: z.int().min(1).max(200_000).optional().describe("Max output tokens per turn."),
   })
   .superRefine((model, ctx) => {
-    if (model.provider !== "ollama" && !model.apiKeyEnv)
+    if (model.provider !== "ollama" && !model.apiKeyCredential)
       ctx.addIssue({
         code: "custom",
-        path: ["apiKeyEnv"],
-        message: `${model.provider} needs the name of the env var that holds its API key.`,
+        path: ["apiKeyCredential"],
+        message: `${model.provider} needs the credential that holds its API key.`,
       });
   })
   .describe("The chat model the agent runs on. It must support tool calling.");
@@ -102,13 +103,28 @@ export const SandboxConfigSchema = z
   })
   .describe("The Docker container the agent's tools run in.");
 
-export const DEFAULT_AGENT_IDENTITY = {
+/**
+ * Whose credentials the agent acts with. Fixed once the agent is created, because switching
+ * would silently change whose accounts its actions land in.
+ */
+export const AGENT_IDENTITIES = ["assistant", "autonomous"] as const;
+
+export const AgentIdentitySchema = z
+  .enum(AGENT_IDENTITIES, {
+    error: "Choose whether this agent is a person's assistant or runs on its own.",
+  })
+  .describe(
+    "`assistant`: a human's assistant; each person chatting with it uses their own credentials. " +
+      "`autonomous`: runs on its own with credentials its owner connects. Can't be changed later.",
+  );
+
+export const DEFAULT_AGENT_PERSONA = {
   avatar: "🤖",
   role: "",
   git: { name: "ProjectZero Agent", email: "agent@projectzero.local" },
 };
 
-export const AgentIdentitySchema = z
+export const AgentPersonaSchema = z
   .object({
     avatar: z
       .string()
@@ -116,25 +132,25 @@ export const AgentIdentitySchema = z
       .min(1)
       .max(16)
       .describe("Emoji shown next to the agent's messages.")
-      .default(DEFAULT_AGENT_IDENTITY.avatar),
+      .default(DEFAULT_AGENT_PERSONA.avatar),
     role: z
       .string()
       .trim()
       .max(200)
       .describe("Who the agent is, e.g. 'Senior TypeScript engineer'. Opens its system prompt.")
-      .default(DEFAULT_AGENT_IDENTITY.role),
+      .default(DEFAULT_AGENT_PERSONA.role),
     git: z
       .object({
         name: z.string().trim().min(1).max(100).describe("Commit author name."),
         email: z.email().describe("Commit author email."),
-        tokenEnv: envName
-          .optional()
-          .describe("Server env var with a token for pushing (e.g. a GitHub PAT). Never stored."),
+        tokenCredential: CredentialNameSchema.optional().describe(
+          "Credential with a token for pushing, e.g. a GitHub PAT.",
+        ),
       })
       .describe("Who the agent's commits are attributed to inside the sandbox.")
-      .default(DEFAULT_AGENT_IDENTITY.git),
+      .default(DEFAULT_AGENT_PERSONA.git),
   })
-  .describe("How the agent presents itself and who its work is attributed to.");
+  .describe("How the agent presents itself and who its commits are attributed to.");
 
 /** Tools the harness provides; all of them act inside the sandbox. */
 export const BUILTIN_TOOLS = {
@@ -183,7 +199,7 @@ export const McpServerConfigSchema = z
       headers: z
         .record(z.string().min(1).max(200), z.string().max(4000))
         .default({})
-        .describe("Request headers. Use `${NAME}` to read a token from the server env."),
+        .describe("Request headers. Use `${NAME}` to insert a credential, e.g. `Bearer ${TOKEN}`."),
     }),
   ])
   .describe("An MCP server whose tools the agent can call.");
@@ -216,7 +232,8 @@ const configFields = {
     .max(20_000)
     .describe("Extra instructions appended to the harness's base prompt.")
     .default(""),
-  identity: AgentIdentitySchema.default(DEFAULT_AGENT_IDENTITY),
+  identity: AgentIdentitySchema,
+  persona: AgentPersonaSchema.default(DEFAULT_AGENT_PERSONA),
   model: ModelConfigSchema,
   sandbox: SandboxConfigSchema,
   tools: z
@@ -255,22 +272,49 @@ export const CodingAgentSchema = z
   .object({
     id: z.uuid().describe("Unique identifier of the agent."),
     ...configFields,
+    requiredCredentials: z
+      .array(CredentialNameSchema)
+      .describe("Credentials the agent's config refers to; a run needs all of them."),
     createdAt: z.iso.datetime().describe("When the agent was created (ISO 8601)."),
     updatedAt: z.iso.datetime().describe("When the agent was last changed (ISO 8601)."),
   })
-  .describe("A coding agent: identity, model, sandbox, tools, MCP servers and skills.");
+  .describe("A coding agent: identity, persona, model, sandbox, tools, MCP servers and skills.");
 
 export const CreateCodingAgentSchema = z
   .object(configFields)
   .describe("Fields for creating a coding agent.");
 
-/** Each top-level field replaces the stored value as a whole (no deep merge). */
+/**
+ * Each top-level field replaces the stored value as a whole (no deep merge). `identity` may be
+ * sent so clients can PATCH a full config back, but it must match the stored value.
+ */
 export const UpdateCodingAgentSchema = z
   .object(withoutDefaults(configFields))
   .describe("Fields to change on a coding agent; each replaces the stored value as a whole.");
 
+/**
+ * Every credential a config refers to, sorted and de-duplicated: the model's API key, the git
+ * push token, and `${NAME}` references in sandbox env, MCP env and MCP headers.
+ */
+export function requiredCredentials(
+  config: Pick<CreateCodingAgent, "model" | "persona" | "sandbox" | "mcpServers">,
+): string[] {
+  const names = [
+    config.model.apiKeyCredential,
+    config.persona.git.tokenCredential,
+    ...Object.values(config.sandbox.env).flatMap(credentialRefs),
+    ...config.mcpServers.flatMap((server) =>
+      Object.values(server.transport === "stdio" ? server.env : server.headers).flatMap(
+        credentialRefs,
+      ),
+    ),
+  ];
+  return [...new Set(names.filter((n): n is string => !!n))].sort();
+}
+
 export type ModelProvider = (typeof MODEL_PROVIDERS)[number];
 export type AgentIdentity = z.infer<typeof AgentIdentitySchema>;
+export type AgentPersona = z.infer<typeof AgentPersonaSchema>;
 export type ModelConfig = z.infer<typeof ModelConfigSchema>;
 export type SandboxConfig = z.infer<typeof SandboxConfigSchema>;
 export type ToolConfig = z.infer<typeof ToolConfigSchema>;
