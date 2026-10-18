@@ -10,8 +10,9 @@
  *   --public       Let any GitHub account install it, e.g. to own it personally but install it
  *                  on an org.
  *   --webhook-url  Public URL GitHub can POST webhooks to (e.g. a tunnel to the API's
- *                  /v1/github/webhooks). Without it webhooks start disabled; enable them later
- *                  in the app's settings.
+ *                  /v1/github/webhooks). GitHub rejects localhost URLs, so without one the app
+ *                  is created with webhooks off; a webhook secret is still generated so they
+ *                  can be turned on later in the app's settings.
  *
  * It opens GitHub in the browser with the app pre-filled; you review it and click Create, GitHub
  * redirects back to a one-shot local server here, and the script exchanges the code for the
@@ -63,7 +64,6 @@ function manifest(redirectUrl: string) {
     callback_urls: [`${webOrigin}/v1/github/installations/callback`],
     request_oauth_on_install: true,
     setup_on_update: true,
-    hook_attributes: { url: webhookUrl ?? `${webOrigin}/v1/github/webhooks`, active: !!webhookUrl },
     default_permissions: {
       contents: "write", // clone and push
       pull_requests: "write",
@@ -74,7 +74,12 @@ function manifest(redirectUrl: string) {
       metadata: "read",
       organization_projects: "write", // GitHub Projects (org-owned)
     },
-    default_events: ["issues", "issue_comment", "pull_request", "push", "workflow_run"],
+    // GitHub refuses a manifest whose hook URL isn't publicly reachable (even when inactive),
+    // and event subscriptions need a hook, so both are left out unless a public URL is given.
+    ...(webhookUrl && {
+      hook_attributes: { url: webhookUrl, active: true },
+      default_events: ["issues", "issue_comment", "pull_request", "push", "workflow_run"],
+    }),
   };
 }
 
@@ -146,6 +151,8 @@ const server = createServer(async (req, res) => {
       process.exit(1);
     }
 
+    // Without a hook GitHub returns no secret; make one so webhooks can be enabled later.
+    const webhookSecret = app.webhook_secret ?? randomBytes(32).toString("hex");
     let env = existsSync(envFile) ? readFileSync(envFile, "utf8") : "";
     for (const [key, value] of Object.entries({
       GITHUB_APP_ID: String(app.id),
@@ -153,7 +160,7 @@ const server = createServer(async (req, res) => {
       GITHUB_APP_CLIENT_ID: app.client_id,
       GITHUB_APP_CLIENT_SECRET: app.client_secret,
       GITHUB_APP_PRIVATE_KEY: app.pem.trim().replace(/\n/g, "\\n"),
-      GITHUB_APP_WEBHOOK_SECRET: app.webhook_secret ?? "",
+      GITHUB_APP_WEBHOOK_SECRET: webhookSecret,
     }))
       env = setEnv(env, key, value);
     writeFileSync(envFile, env);
@@ -169,8 +176,12 @@ const server = createServer(async (req, res) => {
     );
     console.log(`\n✓ Created GitHub App "${app.slug}" (${app.html_url})`);
     console.log(`  Wrote GITHUB_APP_* to ${envFile}. Restart the API to pick them up.`);
-    if (!args["webhook-url"])
-      console.log("  Webhooks are off; set a public URL in the app's settings to enable them.");
+    if (!app.webhook_secret)
+      console.log(
+        "  Webhooks are off. To turn them on, open the app's settings on GitHub, set the webhook\n" +
+          "  URL to a public address for the API's /v1/github/webhooks, tick Active, and paste\n" +
+          "  GITHUB_APP_WEBHOOK_SECRET from .env as the secret.",
+      );
     server.close();
     return;
   }
