@@ -12,6 +12,8 @@ autoInstallPeers: false
 # Dependencies allowed to run install scripts.
 allowBuilds:
   esbuild: true
+  # Downloads the Electron binary.
+  electron: true
   "@swc/core": true
   # Install-time analytics ping; not needed.
   "@scarf/scarf": false

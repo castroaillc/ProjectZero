@@ -1,0 +1,4 @@
+{
+  "extends": "@projectzero/config/tsconfig/react.json",
+  "include": ["src/renderer/src", "src/preload/api.d.ts"]
+}
