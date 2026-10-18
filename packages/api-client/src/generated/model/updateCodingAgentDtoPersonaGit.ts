@@ -9,7 +9,7 @@
 /**
  * Who the agent's commits are attributed to inside the sandbox.
  */
-export type CreateCodingAgentDtoIdentityGit = {
+export type UpdateCodingAgentDtoPersonaGit = {
   /**
    * Commit author name.
    * @minLength 1
@@ -22,8 +22,10 @@ export type CreateCodingAgentDtoIdentityGit = {
    */
   email: string;
   /**
-   * Server env var with a token for pushing (e.g. a GitHub PAT). Never stored.
-   * @pattern ^[A-Za-z_][A-Za-z0-9_]*$
+   * Credential with a token for pushing, e.g. a GitHub PAT.
+   * @minLength 1
+   * @maxLength 64
+   * @pattern ^[A-Z][A-Z0-9_]*$
    */
-  tokenEnv?: string;
+  tokenCredential?: string;
 };

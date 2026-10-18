@@ -22,10 +22,12 @@ export type CreateCodingAgentDtoModel = {
   /** Server URL. Ollama defaults to the API's OLLAMA_BASE_URL; others to the vendor. */
   baseUrl?: string;
   /**
-   * Name of the server env var holding the API key. The key itself is never stored.
-   * @pattern ^[A-Za-z_][A-Za-z0-9_]*$
+   * Name of the credential holding the API key.
+   * @minLength 1
+   * @maxLength 64
+   * @pattern ^[A-Z][A-Z0-9_]*$
    */
-  apiKeyEnv?: string;
+  apiKeyCredential?: string;
   /**
    * Sampling temperature.
    * @minimum 0

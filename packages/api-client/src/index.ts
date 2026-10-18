@@ -9,6 +9,7 @@ export {
 export { useAgentRun, type AgentRunState } from "./use-agent-run";
 export * from "./generated/agent/agent";
 export * from "./generated/coding-agents/coding-agents";
+export * from "./generated/credentials/credentials";
 export { createQueryClient } from "./query-client";
 export * from "./generated/health/health";
 export * from "./generated/todos/todos";

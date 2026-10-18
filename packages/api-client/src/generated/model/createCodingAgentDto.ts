@@ -8,6 +8,7 @@
 import type { CreateCodingAgentDtoIdentity } from "./createCodingAgentDtoIdentity";
 import type { CreateCodingAgentDtoMcpServersItem } from "./createCodingAgentDtoMcpServersItem";
 import type { CreateCodingAgentDtoModel } from "./createCodingAgentDtoModel";
+import type { CreateCodingAgentDtoPersona } from "./createCodingAgentDtoPersona";
 import type { CreateCodingAgentDtoSandbox } from "./createCodingAgentDtoSandbox";
 import type { CreateCodingAgentDtoSkillsItem } from "./createCodingAgentDtoSkillsItem";
 import type { CreateCodingAgentDtoToolsItem } from "./createCodingAgentDtoToolsItem";
@@ -32,8 +33,10 @@ export interface CreateCodingAgentDto {
    * @maxLength 20000
    */
   systemPrompt?: string;
-  /** How the agent presents itself and who its work is attributed to. */
-  identity?: CreateCodingAgentDtoIdentity;
+  /** `assistant`: a human's assistant; each person chatting with it uses their own credentials. `autonomous`: runs on its own with credentials its owner connects. Can't be changed later. */
+  identity: CreateCodingAgentDtoIdentity;
+  /** How the agent presents itself and who its commits are attributed to. */
+  persona?: CreateCodingAgentDtoPersona;
   /** The chat model the agent runs on. It must support tool calling. */
   model: CreateCodingAgentDtoModel;
   /** The Docker container the agent's tools run in. */

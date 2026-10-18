@@ -5,23 +5,14 @@
  * REST API shared by the ProjectZero web, desktop and mobile apps.
  * OpenAPI spec version: 1
  */
-import type { CodingAgentDtoOutputIdentityGit } from "./codingAgentDtoOutputIdentityGit";
 
 /**
- * How the agent presents itself and who its work is attributed to.
+ * `assistant`: a human's assistant; each person chatting with it uses their own credentials. `autonomous`: runs on its own with credentials its owner connects. Can't be changed later.
  */
-export type CodingAgentDtoOutputIdentity = {
-  /**
-   * Emoji shown next to the agent's messages.
-   * @minLength 1
-   * @maxLength 16
-   */
-  avatar: string;
-  /**
-   * Who the agent is, e.g. 'Senior TypeScript engineer'. Opens its system prompt.
-   * @maxLength 200
-   */
-  role: string;
-  /** Who the agent's commits are attributed to inside the sandbox. */
-  git: CodingAgentDtoOutputIdentityGit;
-};
+export type CodingAgentDtoOutputIdentity =
+  (typeof CodingAgentDtoOutputIdentity)[keyof typeof CodingAgentDtoOutputIdentity];
+
+export const CodingAgentDtoOutputIdentity = {
+  assistant: "assistant",
+  autonomous: "autonomous",
+} as const;

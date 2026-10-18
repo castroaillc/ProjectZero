@@ -7,6 +7,6 @@
  */
 
 /**
- * Environment variables. Use `${NAME}` to read a secret from the server instead.
+ * Environment variables. Use `${NAME}` to insert a credential instead of a secret.
  */
 export type CreateCodingAgentDtoSandboxEnv = { [key: string]: string };

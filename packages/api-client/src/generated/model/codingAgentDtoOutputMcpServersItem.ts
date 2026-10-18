@@ -34,7 +34,7 @@ export type CodingAgentDtoOutputMcpServersItem =
        * @items.maxLength 2000
        */
       args: string[];
-      /** Environment variables. Use `${NAME}` to read a secret from the server instead. */
+      /** Environment variables. Use `${NAME}` to insert a credential instead of a secret. */
       env: { [key: string]: string };
     }
   | {
@@ -51,6 +51,6 @@ export type CodingAgentDtoOutputMcpServersItem =
       transport: "http";
       /** MCP endpoint URL. */
       url: string;
-      /** Request headers. Use `${NAME}` to read a token from the server env. */
+      /** Request headers. Use `${NAME}` to insert a credential, e.g. `Bearer ${TOKEN}`. */
       headers: { [key: string]: string };
     };

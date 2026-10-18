@@ -8,12 +8,13 @@
 import type { CodingAgentDtoOutputIdentity } from "./codingAgentDtoOutputIdentity";
 import type { CodingAgentDtoOutputMcpServersItem } from "./codingAgentDtoOutputMcpServersItem";
 import type { CodingAgentDtoOutputModel } from "./codingAgentDtoOutputModel";
+import type { CodingAgentDtoOutputPersona } from "./codingAgentDtoOutputPersona";
 import type { CodingAgentDtoOutputSandbox } from "./codingAgentDtoOutputSandbox";
 import type { CodingAgentDtoOutputSkillsItem } from "./codingAgentDtoOutputSkillsItem";
 import type { CodingAgentDtoOutputToolsItem } from "./codingAgentDtoOutputToolsItem";
 
 /**
- * A coding agent: identity, model, sandbox, tools, MCP servers and skills.
+ * A coding agent: identity, persona, model, sandbox, tools, MCP servers and skills.
  */
 export interface CodingAgentDtoOutput {
   /**
@@ -37,8 +38,10 @@ export interface CodingAgentDtoOutput {
    * @maxLength 20000
    */
   systemPrompt: string;
-  /** How the agent presents itself and who its work is attributed to. */
+  /** `assistant`: a human's assistant; each person chatting with it uses their own credentials. `autonomous`: runs on its own with credentials its owner connects. Can't be changed later. */
   identity: CodingAgentDtoOutputIdentity;
+  /** How the agent presents itself and who its commits are attributed to. */
+  persona: CodingAgentDtoOutputPersona;
   /** The chat model the agent runs on. It must support tool calling. */
   model: CodingAgentDtoOutputModel;
   /** The Docker container the agent's tools run in. */
@@ -55,6 +58,13 @@ export interface CodingAgentDtoOutput {
    * @maxItems 50
    */
   skills: CodingAgentDtoOutputSkillsItem[];
+  /**
+   * Credentials the agent's config refers to; a run needs all of them.
+   * @items.minLength 1
+   * @items.maxLength 64
+   * @items.pattern ^[A-Z][A-Z0-9_]*$
+   */
+  requiredCredentials: string[];
   /**
    * When the agent was created (ISO 8601).
    * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$

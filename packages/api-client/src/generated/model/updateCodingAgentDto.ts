@@ -8,6 +8,7 @@
 import type { UpdateCodingAgentDtoIdentity } from "./updateCodingAgentDtoIdentity";
 import type { UpdateCodingAgentDtoMcpServersItem } from "./updateCodingAgentDtoMcpServersItem";
 import type { UpdateCodingAgentDtoModel } from "./updateCodingAgentDtoModel";
+import type { UpdateCodingAgentDtoPersona } from "./updateCodingAgentDtoPersona";
 import type { UpdateCodingAgentDtoSandbox } from "./updateCodingAgentDtoSandbox";
 import type { UpdateCodingAgentDtoSkillsItem } from "./updateCodingAgentDtoSkillsItem";
 import type { UpdateCodingAgentDtoToolsItem } from "./updateCodingAgentDtoToolsItem";
@@ -32,8 +33,10 @@ export interface UpdateCodingAgentDto {
    * @maxLength 20000
    */
   systemPrompt?: string;
-  /** How the agent presents itself and who its work is attributed to. */
+  /** `assistant`: a human's assistant; each person chatting with it uses their own credentials. `autonomous`: runs on its own with credentials its owner connects. Can't be changed later. */
   identity?: UpdateCodingAgentDtoIdentity;
+  /** How the agent presents itself and who its commits are attributed to. */
+  persona?: UpdateCodingAgentDtoPersona;
   /** The chat model the agent runs on. It must support tool calling. */
   model?: UpdateCodingAgentDtoModel;
   /** The Docker container the agent's tools run in. */
