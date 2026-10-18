@@ -563,6 +563,9 @@ importers:
       '@projectzero/api-client':
         specifier: workspace:*
         version: link:../api-client
+      '@projectzero/auth':
+        specifier: workspace:*
+        version: link:../auth
       clsx:
         specifier: 2.1.1
         version: 2.1.1

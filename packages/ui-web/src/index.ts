@@ -3,6 +3,7 @@ export { Button, type ButtonProps } from "./components/button";
 export { Card } from "./components/card";
 export { Field } from "./components/field";
 export { Input } from "./components/input";
+export { OrganizationSwitcher, useOrgRole } from "./components/organization-switcher";
 export { Select } from "./components/select";
 export { Textarea } from "./components/textarea";
 export { CodingAgentsScreen, type CodingAgentsScreenProps } from "./screens/coding-agents-screen";
