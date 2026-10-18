@@ -29,7 +29,17 @@ export class AgentService implements OnApplicationBootstrap, OnApplicationShutdo
   ) {}
 
   async onApplicationBootstrap() {
-    await this.checkpointer.setup();
+    // setup() isn't safe to run concurrently: two instances booting against a fresh database
+    // race on CREATE SCHEMA and the migration rows. Serialize it across processes with a
+    // session-level advisory lock held on one reserved connection.
+    const conn = await this.db.$client.reserve();
+    try {
+      await conn`select pg_advisory_lock(hashtext('projectzero:agent-checkpointer-setup'))`;
+      await this.checkpointer.setup();
+    } finally {
+      await conn`select pg_advisory_unlock(hashtext('projectzero:agent-checkpointer-setup'))`;
+      conn.release();
+    }
   }
 
   async onApplicationShutdown() {
