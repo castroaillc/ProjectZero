@@ -9,7 +9,10 @@ import {
   useCreateCodingAgent,
   useDeleteCodingAgent,
   useListCodingAgents,
+  useGetGitHubApp,
   useListCredentials,
+  useListGitHubInstallations,
+  GITHUB_APP_CREDENTIAL,
   useUpdateCodingAgent,
   type AgentIdentity,
   type AgentTemplateDtoOutput,
@@ -24,19 +27,36 @@ import {
   type Skill,
 } from "@projectzero/api-client";
 import { useQueryClient } from "@tanstack/react-query";
-import { Bot, Check, CircleAlert, KeyRound, Plus, Trash2, User, X } from "lucide-react";
-import { useState, type FormEvent, type ReactNode } from "react";
+import type { ReactAuthClient } from "@projectzero/auth/react";
+import {
+  Bot,
+  Check,
+  CircleAlert,
+  GitPullRequest,
+  KeyRound,
+  Plus,
+  Trash2,
+  User,
+  X,
+} from "lucide-react";
+import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { cn } from "../cn";
 import { Button } from "../components/button";
 import { Card } from "../components/card";
 import { Field } from "../components/field";
 import { Input } from "../components/input";
+import { OrganizationSwitcher, useOrgRole } from "../components/organization-switcher";
 import { Select } from "../components/select";
 import { Textarea } from "../components/textarea";
 import { AgentTemplatePicker } from "./agent-template-picker";
 import { CredentialsPanel } from "./credentials-panel";
+import { GitHubPanel } from "./github-panel";
 
 export interface CodingAgentsScreenProps {
+  /** Better Auth client, for the organization switcher and the member's role. */
+  authClient: ReactAuthClient;
+  /** How to send the user to GitHub to install the app; defaults to navigating this window. */
+  openUrl?: (url: string) => void;
   /** Links or buttons shown in the header, e.g. to get back to the todo list. */
   nav?: ReactNode;
 }
@@ -220,6 +240,8 @@ function AgentEditor({
   const remove = useDeleteCodingAgent();
 
   const credentials = useListCredentials();
+  const installations = useListGitHubInstallations();
+  const githubApp = useGetGitHubApp();
   const [draft, setDraft] = useState<Draft>(() =>
     agent ? toDraft(agent) : template ? fromTemplate(template) : newDraft(),
   );
@@ -282,7 +304,20 @@ function AgentEditor({
   }
 
   const pending = create.isPending || update.isPending;
-  const connected = new Set((credentials.data ?? []).map((c) => c.name));
+  // Autonomous agents run with the organization's shared credentials; assistants with the
+  // personal credentials of whoever they work for (checked here for the signed-in member).
+  const scope = draft.identity === "assistant" ? "personal" : "shared";
+  const connected = new Set(
+    (credentials.data ?? []).filter((c) => c.scope === scope).map((c) => c.name),
+  );
+  if ((installations.data ?? []).some((i) => !i.suspended)) connected.add(GITHUB_APP_CREDENTIAL);
+  const missingText = (name: string) =>
+    name === GITHUB_APP_CREDENTIAL
+      ? "install the GitHub App (GitHub, in the sidebar)"
+      : scope === "shared"
+        ? "add it to the organization's shared credentials"
+        : "add it to your personal credentials";
+  const bot = githubApp.data?.bot;
   const needed = requiredCredentials(draft);
   const credentialHelp = new Map(template?.credentials.map((c) => [c.name, c.description]));
 
@@ -403,6 +438,17 @@ function AgentEditor({
               />
             </Field>
           </div>
+          {bot &&
+            (draft.persona.git.name !== bot.name || draft.persona.git.email !== bot.email) && (
+              <button
+                type="button"
+                onClick={() => setGit({ name: bot.name, email: bot.email })}
+                className="flex items-center gap-2 self-start text-sm text-accent hover:underline"
+              >
+                <GitPullRequest className="size-4" aria-hidden /> Commit as the GitHub App&apos;s
+                bot ({bot.name})
+              </button>
+            )}
           <div className="grid gap-4 sm:grid-cols-3">
             <Field label="Git author name">
               <Input
@@ -860,8 +906,8 @@ function AgentEditor({
           title="Credentials"
           hint={
             draft.identity === "assistant"
-              ? "Each person who chats with this agent connects their own. Yours are checked below."
-              : "Runs use these from your credentials."
+              ? "Each person who chats with this agent uses their own. Yours are checked below."
+              : "Runs use the organization's shared credentials."
           }
         >
           {needed.length === 0 ? (
@@ -878,7 +924,7 @@ function AgentEditor({
                     )}
                     <span className="font-mono">{name}</span>
                     <span className="text-muted">
-                      {connected.has(name) ? "connected" : "not in your credentials yet"}
+                      {connected.has(name) ? "connected" : missingText(name)}
                     </span>
                   </span>
                   {credentialHelp.has(name) && (
@@ -925,10 +971,28 @@ function AgentEditor({
   );
 }
 
-/** Lists the user's coding agents and edits one at a time. Shared by web and desktop. */
-export function CodingAgentsScreen({ nav }: CodingAgentsScreenProps) {
+/**
+ * The active organization's coding agents, credentials and GitHub connection, editing one agent
+ * at a time. Shared by web and desktop.
+ */
+export function CodingAgentsScreen({ nav, authClient, openUrl }: CodingAgentsScreenProps) {
   const agents = useListCodingAgents();
-  const [selected, setSelected] = useState<string | "new" | "credentials" | null>(null);
+  const { isAdmin } = useOrgRole(authClient);
+  const [selected, setSelected] = useState<string | "new" | "credentials" | "github" | null>(null);
+  const [githubNotice, setGithubNotice] = useState<{
+    kind: "connected" | "error";
+    message?: string;
+  } | null>(null);
+
+  // Coming back from GitHub's install flow: show the result on the GitHub panel, then tidy the URL.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const result = params.get("github");
+    if (result !== "connected" && result !== "error") return;
+    setGithubNotice({ kind: result, message: params.get("message") ?? undefined });
+    setSelected("github");
+    window.history.replaceState(null, "", window.location.pathname);
+  }, []);
   // While creating: undefined = still picking, null = blank, otherwise the chosen template.
   const [start, setStart] = useState<AgentTemplateDtoOutput | null | undefined>(undefined);
   const startNew = () => {
@@ -948,7 +1012,10 @@ export function CodingAgentsScreen({ nav }: CodingAgentsScreenProps) {
             Identity, persona, model, sandbox, tools, MCP servers and skills.
           </p>
         </div>
-        {nav}
+        <div className="flex items-start gap-2">
+          <OrganizationSwitcher authClient={authClient} />
+          {nav}
+        </div>
       </header>
 
       <div className="mt-6 grid gap-6 md:grid-cols-[15rem_1fr] md:items-start">
@@ -1000,11 +1067,20 @@ export function CodingAgentsScreen({ nav }: CodingAgentsScreenProps) {
             >
               <KeyRound className="size-4" aria-hidden /> Credentials
             </Button>
+            <Button
+              variant={selected === "github" ? "primary" : "ghost"}
+              className="w-full justify-start"
+              onClick={() => setSelected("github")}
+            >
+              <GitPullRequest className="size-4" aria-hidden /> GitHub
+            </Button>
           </div>
         </Card>
 
-        {selected === "credentials" ? (
-          <CredentialsPanel />
+        {selected === "github" ? (
+          <GitHubPanel isAdmin={isAdmin} notice={githubNotice} openUrl={openUrl} />
+        ) : selected === "credentials" ? (
+          <CredentialsPanel isAdmin={isAdmin} />
         ) : selected === "new" && start === undefined ? (
           <AgentTemplatePicker onPick={setStart} />
         ) : editing ? (

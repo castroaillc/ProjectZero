@@ -1,3 +1,6 @@
+// Lets TypeScript name the organization plugin's atom types in this module's declarations.
+import type {} from "better-auth/client";
+import { organizationClient } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
 import { AUTH_BASE_PATH } from "./constants";
 
@@ -14,10 +17,16 @@ export interface ReactAuthClientOptions {
 
 /**
  * Better Auth client for React apps (web, desktop renderer). Exposes `signIn`, `signUp`,
- * `signOut` and the `useSession()` hook. Browser-only: never imports server code.
+ * `signOut`, the `useSession()` hook and `organization.*` (create, list, setActive, members) with
+ * `useListOrganizations()` / `useActiveOrganization()`. Browser-only: never imports server code.
  */
 export function createReactAuthClient({ baseURL, fetchOptions }: ReactAuthClientOptions = {}) {
-  return createAuthClient({ baseURL, basePath: AUTH_BASE_PATH, fetchOptions });
+  return createAuthClient({
+    baseURL,
+    basePath: AUTH_BASE_PATH,
+    fetchOptions,
+    plugins: [organizationClient()],
+  });
 }
 
 export type ReactAuthClient = ReturnType<typeof createReactAuthClient>;

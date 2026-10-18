@@ -15,6 +15,10 @@ export function App() {
   if (session && screen === "agents") {
     return (
       <CodingAgentsScreen
+        authClient={authClient}
+        // The main process opens window.open URLs in the system browser. GitHub's install flow
+        // finishes in the web app there, so the user must be signed in on the web as well.
+        openUrl={(url) => window.open(url, "_blank")}
         nav={
           <Button variant="ghost" onClick={() => setScreen("todos")}>
             <ListTodo className="size-4" aria-hidden /> Todos

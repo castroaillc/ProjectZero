@@ -32,7 +32,7 @@ describe("agent templates", () => {
     expect(pm).toMatchObject({
       name: "Project manager",
       recommendedIdentity: "autonomous",
-      credentials: [{ name: "GITHUB_TOKEN" }],
+      credentials: [{ name: "GITHUB_APP_TOKEN" }],
       config: {
         persona: { avatar: "📋" },
         sandbox: { workdir: "/workspace", setupCommands: [] },
@@ -62,7 +62,7 @@ describe("agent templates", () => {
     expect(body).toMatchObject({
       templateId: "project-manager",
       identity: "assistant",
-      requiredCredentials: ["GITHUB_TOKEN"],
+      requiredCredentials: ["GITHUB_APP_TOKEN"],
       systemPrompt: pm.config.systemPrompt,
     });
 

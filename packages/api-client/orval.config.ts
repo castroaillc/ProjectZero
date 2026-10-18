@@ -7,7 +7,15 @@ export default defineConfig({
     input: {
       target: "../../apps/api/openapi.json",
       filters: {
-        tags: ["todos", "health", "agent", "coding-agents", "credentials", "agent-templates"],
+        tags: [
+          "todos",
+          "health",
+          "agent",
+          "coding-agents",
+          "credentials",
+          "agent-templates",
+          "github",
+        ],
       },
     },
     output: {

@@ -11,6 +11,7 @@ import { ConfigModule, ENV } from "./config/config.module";
 import { CredentialsModule } from "./credentials/credentials.module";
 import { trustedOrigins, type Env } from "./config/env";
 import { DB, DbModule } from "./db/db.module";
+import { GitHubModule } from "./github/github.module";
 import { HealthModule } from "./health/health.module";
 import { TodosModule } from "./todos/todos.module";
 
@@ -29,6 +30,8 @@ import { TodosModule } from "./todos/todos.module";
           baseURL: env.BETTER_AUTH_URL,
           trustedOrigins: trustedOrigins(env),
         }),
+        // req.rawBody lets the GitHub webhook endpoint verify delivery signatures.
+        bodyParser: { rawBody: true },
       }),
     }),
     HealthModule,
@@ -37,6 +40,7 @@ import { TodosModule } from "./todos/todos.module";
     CodingAgentsModule,
     CredentialsModule,
     AgentTemplatesModule,
+    GitHubModule,
   ],
   providers: [
     { provide: APP_PIPE, useClass: ZodValidationPipe },

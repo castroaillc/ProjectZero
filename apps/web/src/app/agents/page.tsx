@@ -20,6 +20,7 @@ export default function AgentsPage() {
 
   return (
     <CodingAgentsScreen
+      authClient={authClient}
       nav={
         <NavLink href="/">
           <ListTodo className="size-4" aria-hidden /> Todos
