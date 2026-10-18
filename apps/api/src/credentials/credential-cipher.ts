@@ -4,6 +4,14 @@ const VERSION = "v1";
 const IV_BYTES = 12;
 const TAG_BYTES = 16;
 
+/** Who a sealed value belongs to: a member's personal credential, or an organization's shared one. */
+export interface SealedFor {
+  organizationId: string;
+  /** Null for a shared credential. */
+  userId: string | null;
+  name: string;
+}
+
 /**
  * Seals credential values with AES-256-GCM. Each value is bound to its owner and name (as
  * additional authenticated data), so a ciphertext copied onto another row fails to open.
@@ -19,7 +27,7 @@ export class CredentialCipher {
         );
   }
 
-  seal(plaintext: string, owner: { userId: string; name: string }): string {
+  seal(plaintext: string, owner: SealedFor): string {
     const iv = randomBytes(IV_BYTES);
     const cipher = createCipheriv("aes-256-gcm", this.key, iv);
     cipher.setAAD(aad(owner));
@@ -27,7 +35,7 @@ export class CredentialCipher {
     return `${VERSION}:${Buffer.concat([iv, cipher.getAuthTag(), body]).toString("base64")}`;
   }
 
-  open(sealed: string, owner: { userId: string; name: string }): string {
+  open(sealed: string, owner: SealedFor): string {
     const [version, payload] = sealed.split(":");
     if (version !== VERSION || !payload) throw new Error("Unknown credential format");
     const raw = Buffer.from(payload, "base64");
@@ -41,8 +49,11 @@ export class CredentialCipher {
   }
 }
 
-function aad({ userId, name }: { userId: string; name: string }) {
-  return Buffer.from(`${userId}\0${name}`, "utf8");
+// Personal credentials keep the `${userId}\0${name}` binding they had before organizations, so
+// existing ciphertexts still open; shared ones are bound to the organization instead.
+function aad({ organizationId, userId, name }: SealedFor) {
+  const owner = userId ?? `org:${organizationId}`;
+  return Buffer.from(`${owner}\0${name}`, "utf8");
 }
 
 /** Last four characters for display; nothing for short values, where that would leak too much. */

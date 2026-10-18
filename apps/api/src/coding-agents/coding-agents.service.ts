@@ -16,8 +16,13 @@ import {
 import { and, desc, eq } from "drizzle-orm";
 import { DB } from "../db/db.module";
 import { isUniqueViolation } from "../db/errors";
+import type { OrgContext } from "../orgs/active-org";
 
-function toCodingAgent({ userId: _userId, ...row }: CodingAgentRow): CodingAgent {
+function toCodingAgent({
+  organizationId: _org,
+  createdBy: _createdBy,
+  ...row
+}: CodingAgentRow): CodingAgent {
   return {
     ...row,
     requiredCredentials: requiredCredentials(row),
@@ -27,46 +32,46 @@ function toCodingAgent({ userId: _userId, ...row }: CodingAgentRow): CodingAgent
   };
 }
 
-/** Coding-agent configurations. Every method is scoped to one user. */
+/** Coding-agent configurations. Every method is scoped to the caller's active organization. */
 @Injectable()
 export class CodingAgentsService {
   constructor(@Inject(DB) private readonly db: Db) {}
 
-  async list(userId: string): Promise<CodingAgent[]> {
+  async list(org: OrgContext): Promise<CodingAgent[]> {
     const rows = await this.db
       .select()
       .from(codingAgents)
-      .where(eq(codingAgents.userId, userId))
+      .where(eq(codingAgents.organizationId, org.organizationId))
       .orderBy(desc(codingAgents.createdAt));
     return rows.map(toCodingAgent);
   }
 
-  async get(userId: string, id: string): Promise<CodingAgent> {
+  async get(org: OrgContext, id: string): Promise<CodingAgent> {
     const [row] = await this.db
       .select()
       .from(codingAgents)
-      .where(and(eq(codingAgents.id, id), eq(codingAgents.userId, userId)));
+      .where(and(eq(codingAgents.id, id), eq(codingAgents.organizationId, org.organizationId)));
     if (!row) throw new NotFoundException(`Coding agent ${id} not found`);
     return toCodingAgent(row);
   }
 
-  async create(userId: string, input: CreateCodingAgent): Promise<CodingAgent> {
+  async create(org: OrgContext, input: CreateCodingAgent): Promise<CodingAgent> {
     if (input.templateId && !findAgentTemplate(input.templateId))
       throw new BadRequestException(`Unknown agent template "${input.templateId}"`);
     const [row] = await this.write(input.name, () =>
       this.db
         .insert(codingAgents)
-        .values({ ...input, userId })
+        .values({ ...input, organizationId: org.organizationId, createdBy: org.userId })
         .returning(),
     );
     return toCodingAgent(row!);
   }
 
-  async update(userId: string, id: string, input: UpdateCodingAgent): Promise<CodingAgent> {
+  async update(org: OrgContext, id: string, input: UpdateCodingAgent): Promise<CodingAgent> {
     // An empty body is a no-op; Drizzle rejects an update with nothing to set.
-    if (Object.values(input).every((v) => v === undefined)) return this.get(userId, id);
+    if (Object.values(input).every((v) => v === undefined)) return this.get(org, id);
     if (input.identity !== undefined) {
-      const current = await this.get(userId, id);
+      const current = await this.get(org, id);
       if (input.identity !== current.identity)
         throw new BadRequestException(
           `An agent's identity can't change after it's created (this one is ${current.identity}).`,
@@ -76,28 +81,28 @@ export class CodingAgentsService {
       this.db
         .update(codingAgents)
         .set(input)
-        .where(and(eq(codingAgents.id, id), eq(codingAgents.userId, userId)))
+        .where(and(eq(codingAgents.id, id), eq(codingAgents.organizationId, org.organizationId)))
         .returning(),
     );
     if (!row) throw new NotFoundException(`Coding agent ${id} not found`);
     return toCodingAgent(row);
   }
 
-  async remove(userId: string, id: string): Promise<void> {
+  async remove(org: OrgContext, id: string): Promise<void> {
     const deleted = await this.db
       .delete(codingAgents)
-      .where(and(eq(codingAgents.id, id), eq(codingAgents.userId, userId)))
+      .where(and(eq(codingAgents.id, id), eq(codingAgents.organizationId, org.organizationId)))
       .returning({ id: codingAgents.id });
     if (deleted.length === 0) throw new NotFoundException(`Coding agent ${id} not found`);
   }
 
-  /** Runs an insert/update, turning a duplicate (userId, name) into a 409. */
+  /** Runs an insert/update, turning a duplicate (organizationId, name) into a 409. */
   private async write<T>(name: string | undefined, query: () => Promise<T>): Promise<T> {
     try {
       return await query();
     } catch (err) {
       if (isUniqueViolation(err))
-        throw new ConflictException(`You already have a coding agent named "${name}"`);
+        throw new ConflictException(`This organization already has a coding agent named "${name}"`);
       throw err;
     }
   }

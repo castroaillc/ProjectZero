@@ -13,14 +13,15 @@ import {
   ApiBearerAuth,
   ApiConflictResponse,
   ApiCookieAuth,
+  ApiForbiddenResponse,
   ApiNoContentResponse,
   ApiNotFoundResponse,
   ApiOperation,
   ApiTags,
   ApiUnauthorizedResponse,
 } from "@nestjs/swagger";
-import { Session, type UserSession } from "@thallesp/nestjs-better-auth";
 import { ZodResponse } from "nestjs-zod";
+import { ActiveOrg, type OrgContext } from "../orgs/active-org";
 import { CreateCredentialDto, CredentialDto, UpdateCredentialDto } from "./credentials.dto";
 import { CredentialsService } from "./credentials.service";
 
@@ -28,6 +29,7 @@ import { CredentialsService } from "./credentials.service";
 @ApiBearerAuth()
 @ApiCookieAuth()
 @ApiUnauthorizedResponse({ description: "No valid session." })
+@ApiForbiddenResponse({ description: "No active organization, or not a member of it." })
 @Controller("credentials")
 export class CredentialsController {
   constructor(private readonly credentials: CredentialsService) {}
@@ -38,8 +40,8 @@ export class CredentialsController {
   })
   @Get()
   @ZodResponse({ status: 200, type: [CredentialDto] })
-  list(@Session() session: UserSession) {
-    return this.credentials.list(session.user.id);
+  list(@ActiveOrg() org: OrgContext) {
+    return this.credentials.list(org);
   }
 
   @ApiOperation({
@@ -49,8 +51,8 @@ export class CredentialsController {
   @Post()
   @ZodResponse({ status: 201, type: CredentialDto })
   @ApiConflictResponse({ description: "A credential with this name already exists." })
-  create(@Session() session: UserSession, @Body() body: CreateCredentialDto) {
-    return this.credentials.create(session.user.id, body);
+  create(@ActiveOrg() org: OrgContext, @Body() body: CreateCredentialDto) {
+    return this.credentials.create(org, body);
   }
 
   @ApiOperation({
@@ -61,11 +63,11 @@ export class CredentialsController {
   @ZodResponse({ status: 200, type: CredentialDto })
   @ApiNotFoundResponse()
   update(
-    @Session() session: UserSession,
+    @ActiveOrg() org: OrgContext,
     @Param("id", ParseUUIDPipe) id: string,
     @Body() body: UpdateCredentialDto,
   ) {
-    return this.credentials.update(session.user.id, id, body);
+    return this.credentials.update(org, id, body);
   }
 
   @ApiOperation({ operationId: "deleteCredential", summary: "Delete a credential." })
@@ -73,7 +75,7 @@ export class CredentialsController {
   @HttpCode(204)
   @ApiNoContentResponse()
   @ApiNotFoundResponse()
-  remove(@Session() session: UserSession, @Param("id", ParseUUIDPipe) id: string) {
-    return this.credentials.remove(session.user.id, id);
+  remove(@ActiveOrg() org: OrgContext, @Param("id", ParseUUIDPipe) id: string) {
+    return this.credentials.remove(org, id);
   }
 }

@@ -13,14 +13,15 @@ import {
   ApiBearerAuth,
   ApiConflictResponse,
   ApiCookieAuth,
+  ApiForbiddenResponse,
   ApiNoContentResponse,
   ApiNotFoundResponse,
   ApiOperation,
   ApiTags,
   ApiUnauthorizedResponse,
 } from "@nestjs/swagger";
-import { Session, type UserSession } from "@thallesp/nestjs-better-auth";
 import { ZodResponse } from "nestjs-zod";
+import { ActiveOrg, type OrgContext } from "../orgs/active-org";
 import { CodingAgentDto, CreateCodingAgentDto, UpdateCodingAgentDto } from "./coding-agents.dto";
 import { CodingAgentsService } from "./coding-agents.service";
 
@@ -28,6 +29,7 @@ import { CodingAgentsService } from "./coding-agents.service";
 @ApiBearerAuth()
 @ApiCookieAuth()
 @ApiUnauthorizedResponse({ description: "No valid session." })
+@ApiForbiddenResponse({ description: "No active organization, or not a member of it." })
 @Controller("coding-agents")
 export class CodingAgentsController {
   constructor(private readonly agents: CodingAgentsService) {}
@@ -38,16 +40,16 @@ export class CodingAgentsController {
   })
   @Get()
   @ZodResponse({ status: 200, type: [CodingAgentDto] })
-  list(@Session() session: UserSession) {
-    return this.agents.list(session.user.id);
+  list(@ActiveOrg() org: OrgContext) {
+    return this.agents.list(org);
   }
 
   @ApiOperation({ operationId: "getCodingAgent", summary: "Get one coding agent's configuration." })
   @Get(":id")
   @ZodResponse({ status: 200, type: CodingAgentDto })
   @ApiNotFoundResponse()
-  get(@Session() session: UserSession, @Param("id", ParseUUIDPipe) id: string) {
-    return this.agents.get(session.user.id, id);
+  get(@ActiveOrg() org: OrgContext, @Param("id", ParseUUIDPipe) id: string) {
+    return this.agents.get(org, id);
   }
 
   @ApiOperation({
@@ -57,8 +59,8 @@ export class CodingAgentsController {
   @Post()
   @ZodResponse({ status: 201, type: CodingAgentDto })
   @ApiConflictResponse({ description: "An agent with this name already exists." })
-  create(@Session() session: UserSession, @Body() body: CreateCodingAgentDto) {
-    return this.agents.create(session.user.id, body);
+  create(@ActiveOrg() org: OrgContext, @Body() body: CreateCodingAgentDto) {
+    return this.agents.create(org, body);
   }
 
   @ApiOperation({
@@ -70,11 +72,11 @@ export class CodingAgentsController {
   @ApiNotFoundResponse()
   @ApiConflictResponse({ description: "An agent with this name already exists." })
   update(
-    @Session() session: UserSession,
+    @ActiveOrg() org: OrgContext,
     @Param("id", ParseUUIDPipe) id: string,
     @Body() body: UpdateCodingAgentDto,
   ) {
-    return this.agents.update(session.user.id, id, body);
+    return this.agents.update(org, id, body);
   }
 
   @ApiOperation({ operationId: "deleteCodingAgent", summary: "Delete a coding agent." })
@@ -82,7 +84,7 @@ export class CodingAgentsController {
   @HttpCode(204)
   @ApiNoContentResponse()
   @ApiNotFoundResponse()
-  remove(@Session() session: UserSession, @Param("id", ParseUUIDPipe) id: string) {
-    return this.agents.remove(session.user.id, id);
+  remove(@ActiveOrg() org: OrgContext, @Param("id", ParseUUIDPipe) id: string) {
+    return this.agents.remove(org, id);
   }
 }

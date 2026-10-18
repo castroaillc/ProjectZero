@@ -2,7 +2,8 @@ import { randomBytes } from "node:crypto";
 import { describe, expect, it } from "vitest";
 import { CredentialCipher, hintFor } from "./credential-cipher";
 
-const owner = { userId: "u1", name: "GITHUB_TOKEN" };
+const owner = { organizationId: "o1", userId: "u1", name: "GITHUB_TOKEN" };
+const shared = { organizationId: "o1", userId: null, name: "GITHUB_TOKEN" };
 
 describe("CredentialCipher", () => {
   it("round-trips and never stores the plaintext", () => {
@@ -16,6 +17,14 @@ describe("CredentialCipher", () => {
   it("uses a fresh IV each time", () => {
     const cipher = new CredentialCipher({ fallbackSecret: "s" });
     expect(cipher.seal("x", owner)).not.toBe(cipher.seal("x", owner));
+  });
+
+  it("binds shared credentials to their organization", () => {
+    const cipher = new CredentialCipher({ fallbackSecret: "s" });
+    const sealed = cipher.seal("x", shared);
+    expect(cipher.open(sealed, shared)).toBe("x");
+    expect(() => cipher.open(sealed, { ...shared, organizationId: "o2" })).toThrow();
+    expect(() => cipher.open(sealed, owner)).toThrow();
   });
 
   it("refuses ciphertext moved to another user or name", () => {
