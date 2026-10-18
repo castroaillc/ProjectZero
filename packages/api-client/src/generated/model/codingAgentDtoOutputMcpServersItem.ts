@@ -20,6 +20,13 @@ export type CodingAgentDtoOutputMcpServersItem =
       name: string;
       /** `ask` pauses the run for approval before each of this server's tool calls. */
       approval: "auto" | "ask";
+      /**
+       * Tools (by their name on the server) that skip approval even when it's `ask`.
+       * @maxItems 200
+       * @items.minLength 1
+       * @items.maxLength 200
+       */
+      autoApprove: string[];
       /** Started as a process inside the sandbox. */
       transport: "stdio";
       /**
@@ -47,6 +54,13 @@ export type CodingAgentDtoOutputMcpServersItem =
       name: string;
       /** `ask` pauses the run for approval before each of this server's tool calls. */
       approval: "auto" | "ask";
+      /**
+       * Tools (by their name on the server) that skip approval even when it's `ask`.
+       * @maxItems 200
+       * @items.minLength 1
+       * @items.maxLength 200
+       */
+      autoApprove: string[];
       /** Reached over Streamable HTTP from the harness. */
       transport: "http";
       /** MCP endpoint URL. */
