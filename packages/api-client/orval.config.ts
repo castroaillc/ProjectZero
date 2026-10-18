@@ -6,7 +6,7 @@ export default defineConfig({
   api: {
     input: {
       target: "../../apps/api/openapi.json",
-      filters: { tags: ["todos", "health"] },
+      filters: { tags: ["todos", "health", "agent"] },
     },
     output: {
       mode: "tags-split",

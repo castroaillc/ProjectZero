@@ -38,21 +38,29 @@ export class ApiError extends Error {
   }
 }
 
-export const apiFetch = async <T>(path: string, init: RequestInit = {}): Promise<T> => {
+/** Sends a request with the configured base URL and auth; returns the raw Response. */
+export async function apiRequest(path: string, init: RequestInit = {}): Promise<Response> {
   const headers = new Headers(init.headers);
   const token = await config.getToken?.();
   if (token) headers.set("authorization", `Bearer ${token}`);
 
-  const res = await (config.fetch ?? fetch)(`${config.baseUrl}${path}`, {
+  return (config.fetch ?? fetch)(`${config.baseUrl}${path}`, {
     credentials: config.credentials ?? "include",
     ...init,
     headers,
   });
+}
 
+/** Reads a response body as JSON when it is JSON, as text otherwise, or undefined if empty. */
+export async function readBody(res: Response): Promise<unknown> {
   const text = await res.text();
   const isJson = res.headers.get("content-type")?.includes("application/json");
-  const body: unknown = text && isJson ? JSON.parse(text) : text || undefined;
+  return text && isJson ? JSON.parse(text) : text || undefined;
+}
 
+export const apiFetch = async <T>(path: string, init: RequestInit = {}): Promise<T> => {
+  const res = await apiRequest(path, init);
+  const body = await readBody(res);
   if (!res.ok) throw new ApiError(res.status, body);
   return body as T;
 };
