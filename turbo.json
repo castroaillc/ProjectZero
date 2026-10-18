@@ -6,6 +6,7 @@
     "*_PORT",
     "LANGSMITH_*",
     "BETTER_AUTH_*",
+    "CREDENTIALS_KEY",
     "AGENT_MODEL",
     "OLLAMA_BASE_URL"
   ],
@@ -29,9 +30,11 @@
       "dependsOn": ["^build"]
     },
     "db:migrate": {
+      "dependsOn": ["^build"],
       "cache": false
     },
     "db:seed": {
+      "dependsOn": ["^build"],
       "cache": false
     },
     "api:gen": {
