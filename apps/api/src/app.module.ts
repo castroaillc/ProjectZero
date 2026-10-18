@@ -7,6 +7,7 @@ import { ZodSerializerInterceptor, ZodValidationPipe } from "nestjs-zod";
 import { AgentModule } from "./agent/agent.module";
 import { CodingAgentsModule } from "./coding-agents/coding-agents.module";
 import { ConfigModule, ENV } from "./config/config.module";
+import { CredentialsModule } from "./credentials/credentials.module";
 import { trustedOrigins, type Env } from "./config/env";
 import { DB, DbModule } from "./db/db.module";
 import { HealthModule } from "./health/health.module";
@@ -33,6 +34,7 @@ import { TodosModule } from "./todos/todos.module";
     TodosModule,
     AgentModule,
     CodingAgentsModule,
+    CredentialsModule,
   ],
   providers: [
     { provide: APP_PIPE, useClass: ZodValidationPipe },

@@ -24,6 +24,17 @@ export const EnvSchema = z.object({
   /** Ollama model the agent runs on; must support tool calling. */
   AGENT_MODEL: z.string().default("gpt-oss:20b"),
   OLLAMA_BASE_URL: z.url().default("http://localhost:11434"),
+  /**
+   * Base64 32-byte key that encrypts stored credentials. Defaults to one derived from
+   * BETTER_AUTH_SECRET; set it in production so rotating the auth secret doesn't lock them.
+   */
+  CREDENTIALS_KEY: z.preprocess(
+    (v) => (v === "" ? undefined : v),
+    z
+      .base64()
+      .refine((s) => Buffer.from(s, "base64").length === 32, "Must be 32 bytes, base64-encoded.")
+      .optional(),
+  ),
 });
 
 export type Env = z.infer<typeof EnvSchema>;

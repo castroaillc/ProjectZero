@@ -1,23 +1,28 @@
-import { ConflictException, Inject, Injectable, NotFoundException } from "@nestjs/common";
+import {
+  BadRequestException,
+  ConflictException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import { codingAgents, type CodingAgentRow, type Db } from "@projectzero/db";
-import type { CodingAgent, CreateCodingAgent, UpdateCodingAgent } from "@projectzero/shared";
+import {
+  requiredCredentials,
+  type CodingAgent,
+  type CreateCodingAgent,
+  type UpdateCodingAgent,
+} from "@projectzero/shared";
 import { and, desc, eq } from "drizzle-orm";
 import { DB } from "../db/db.module";
+import { isUniqueViolation } from "../db/errors";
 
 function toCodingAgent({ userId: _userId, ...row }: CodingAgentRow): CodingAgent {
   return {
     ...row,
+    requiredCredentials: requiredCredentials(row),
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
-}
-
-/** Postgres unique_violation; drizzle wraps driver errors, so check the cause too. */
-function isUniqueViolation(err: unknown): boolean {
-  for (let e = err; e && typeof e === "object"; e = (e as { cause?: unknown }).cause) {
-    if ((e as { code?: unknown }).code === "23505") return true;
-  }
-  return false;
 }
 
 /** Coding-agent configurations. Every method is scoped to one user. */
@@ -56,6 +61,13 @@ export class CodingAgentsService {
   async update(userId: string, id: string, input: UpdateCodingAgent): Promise<CodingAgent> {
     // An empty body is a no-op; Drizzle rejects an update with nothing to set.
     if (Object.values(input).every((v) => v === undefined)) return this.get(userId, id);
+    if (input.identity !== undefined) {
+      const current = await this.get(userId, id);
+      if (input.identity !== current.identity)
+        throw new BadRequestException(
+          `An agent's identity can't change after it's created (this one is ${current.identity}).`,
+        );
+    }
     const [row] = await this.write(input.name, () =>
       this.db
         .update(codingAgents)

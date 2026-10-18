@@ -805,6 +805,177 @@
         ]
       }
     },
+    "/v1/credentials": {
+      "get": {
+        "operationId": "listCredentials",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CredentialDto_Output"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session."
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the signed-in user's credentials (names and hints, never values).",
+        "tags": [
+          "credentials"
+        ]
+      },
+      "post": {
+        "operationId": "createCredential",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCredentialDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CredentialDto_Output"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session."
+          },
+          "409": {
+            "description": "A credential with this name already exists."
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Store a secret, encrypted, for agents to use by name.",
+        "tags": [
+          "credentials"
+        ]
+      }
+    },
+    "/v1/credentials/{id}": {
+      "patch": {
+        "operationId": "updateCredential",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCredentialDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CredentialDto_Output"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session."
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Replace a credential's value or description. The name can't change.",
+        "tags": [
+          "credentials"
+        ]
+      },
+      "delete": {
+        "operationId": "deleteCredential",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "401": {
+            "description": "No valid session."
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete a credential.",
+        "tags": [
+          "credentials"
+        ]
+      }
+    },
     "/api/auth/sign-in/social": {
       "post": {
         "tags": [
@@ -6516,6 +6687,14 @@
             "description": "Extra instructions appended to the harness's base prompt."
           },
           "identity": {
+            "type": "string",
+            "enum": [
+              "assistant",
+              "autonomous"
+            ],
+            "description": "`assistant`: a human's assistant; each person chatting with it uses their own credentials. `autonomous`: runs on its own with credentials its owner connects. Can't be changed later."
+          },
+          "persona": {
             "type": "object",
             "default": {
               "avatar": "🤖",
@@ -6558,10 +6737,12 @@
                     "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$",
                     "description": "Commit author email."
                   },
-                  "tokenEnv": {
-                    "description": "Server env var with a token for pushing (e.g. a GitHub PAT). Never stored.",
+                  "tokenCredential": {
+                    "description": "Credential with a token for pushing, e.g. a GitHub PAT.",
                     "type": "string",
-                    "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+                    "minLength": 1,
+                    "maxLength": 64,
+                    "pattern": "^[A-Z][A-Z0-9_]*$"
                   }
                 },
                 "required": [
@@ -6578,7 +6759,7 @@
               "git"
             ],
             "additionalProperties": false,
-            "description": "How the agent presents itself and who its work is attributed to."
+            "description": "How the agent presents itself and who its commits are attributed to."
           },
           "model": {
             "type": "object",
@@ -6603,10 +6784,12 @@
                 "type": "string",
                 "format": "uri"
               },
-              "apiKeyEnv": {
-                "description": "Name of the server env var holding the API key. The key itself is never stored.",
+              "apiKeyCredential": {
+                "description": "Name of the credential holding the API key.",
                 "type": "string",
-                "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+                "minLength": 1,
+                "maxLength": 64,
+                "pattern": "^[A-Z][A-Z0-9_]*$"
               },
               "temperature": {
                 "description": "Sampling temperature.",
@@ -6717,7 +6900,7 @@
                   "type": "string",
                   "maxLength": 4000
                 },
-                "description": "Environment variables. Use `${NAME}` to read a secret from the server instead."
+                "description": "Environment variables. Use `${NAME}` to insert a credential instead of a secret."
               }
             },
             "required": [
@@ -6852,7 +7035,7 @@
                         "type": "string",
                         "maxLength": 4000
                       },
-                      "description": "Environment variables. Use `${NAME}` to read a secret from the server instead."
+                      "description": "Environment variables. Use `${NAME}` to insert a credential instead of a secret."
                     }
                   },
                   "required": [
@@ -6896,7 +7079,7 @@
                     },
                     "headers": {
                       "default": {},
-                      "description": "Request headers. Use `${NAME}` to read a token from the server env.",
+                      "description": "Request headers. Use `${NAME}` to insert a credential, e.g. `Bearer ${TOKEN}`.",
                       "type": "object",
                       "propertyNames": {
                         "type": "string",
@@ -6960,6 +7143,16 @@
             },
             "description": "Skills the agent can load."
           },
+          "requiredCredentials": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64,
+              "pattern": "^[A-Z][A-Z0-9_]*$"
+            },
+            "description": "Credentials the agent's config refers to; a run needs all of them."
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time",
@@ -6979,15 +7172,17 @@
           "description",
           "systemPrompt",
           "identity",
+          "persona",
           "model",
           "sandbox",
           "tools",
           "mcpServers",
           "skills",
+          "requiredCredentials",
           "createdAt",
           "updatedAt"
         ],
-        "description": "A coding agent: identity, model, sandbox, tools, MCP servers and skills.",
+        "description": "A coding agent: identity, persona, model, sandbox, tools, MCP servers and skills.",
         "additionalProperties": false
       },
       "CreateCodingAgentDto": {
@@ -7012,6 +7207,14 @@
             "description": "Extra instructions appended to the harness's base prompt."
           },
           "identity": {
+            "type": "string",
+            "enum": [
+              "assistant",
+              "autonomous"
+            ],
+            "description": "`assistant`: a human's assistant; each person chatting with it uses their own credentials. `autonomous`: runs on its own with credentials its owner connects. Can't be changed later."
+          },
+          "persona": {
             "default": {
               "avatar": "🤖",
               "role": "",
@@ -7054,10 +7257,12 @@
                     "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$",
                     "description": "Commit author email."
                   },
-                  "tokenEnv": {
-                    "description": "Server env var with a token for pushing (e.g. a GitHub PAT). Never stored.",
+                  "tokenCredential": {
+                    "description": "Credential with a token for pushing, e.g. a GitHub PAT.",
                     "type": "string",
-                    "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+                    "minLength": 1,
+                    "maxLength": 64,
+                    "pattern": "^[A-Z][A-Z0-9_]*$"
                   }
                 },
                 "required": [
@@ -7067,7 +7272,7 @@
                 "description": "Who the agent's commits are attributed to inside the sandbox."
               }
             },
-            "description": "How the agent presents itself and who its work is attributed to."
+            "description": "How the agent presents itself and who its commits are attributed to."
           },
           "model": {
             "type": "object",
@@ -7092,10 +7297,12 @@
                 "type": "string",
                 "format": "uri"
               },
-              "apiKeyEnv": {
-                "description": "Name of the server env var holding the API key. The key itself is never stored.",
+              "apiKeyCredential": {
+                "description": "Name of the credential holding the API key.",
                 "type": "string",
-                "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+                "minLength": 1,
+                "maxLength": 64,
+                "pattern": "^[A-Z][A-Z0-9_]*$"
               },
               "temperature": {
                 "description": "Sampling temperature.",
@@ -7204,7 +7411,7 @@
                   "type": "string",
                   "maxLength": 4000
                 },
-                "description": "Environment variables. Use `${NAME}` to read a secret from the server instead."
+                "description": "Environment variables. Use `${NAME}` to insert a credential instead of a secret."
               }
             },
             "required": [
@@ -7329,7 +7536,7 @@
                         "type": "string",
                         "maxLength": 4000
                       },
-                      "description": "Environment variables. Use `${NAME}` to read a secret from the server instead."
+                      "description": "Environment variables. Use `${NAME}` to insert a credential instead of a secret."
                     }
                   },
                   "required": [
@@ -7369,7 +7576,7 @@
                     },
                     "headers": {
                       "default": {},
-                      "description": "Request headers. Use `${NAME}` to read a token from the server env.",
+                      "description": "Request headers. Use `${NAME}` to insert a credential, e.g. `Bearer ${TOKEN}`.",
                       "type": "object",
                       "propertyNames": {
                         "type": "string",
@@ -7432,6 +7639,7 @@
         },
         "required": [
           "name",
+          "identity",
           "model",
           "sandbox"
         ],
@@ -7457,6 +7665,14 @@
             "description": "Extra instructions appended to the harness's base prompt."
           },
           "identity": {
+            "type": "string",
+            "enum": [
+              "assistant",
+              "autonomous"
+            ],
+            "description": "`assistant`: a human's assistant; each person chatting with it uses their own credentials. `autonomous`: runs on its own with credentials its owner connects. Can't be changed later."
+          },
+          "persona": {
             "type": "object",
             "properties": {
               "avatar": {
@@ -7491,10 +7707,12 @@
                     "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$",
                     "description": "Commit author email."
                   },
-                  "tokenEnv": {
-                    "description": "Server env var with a token for pushing (e.g. a GitHub PAT). Never stored.",
+                  "tokenCredential": {
+                    "description": "Credential with a token for pushing, e.g. a GitHub PAT.",
                     "type": "string",
-                    "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+                    "minLength": 1,
+                    "maxLength": 64,
+                    "pattern": "^[A-Z][A-Z0-9_]*$"
                   }
                 },
                 "required": [
@@ -7504,7 +7722,7 @@
                 "description": "Who the agent's commits are attributed to inside the sandbox."
               }
             },
-            "description": "How the agent presents itself and who its work is attributed to."
+            "description": "How the agent presents itself and who its commits are attributed to."
           },
           "model": {
             "type": "object",
@@ -7529,10 +7747,12 @@
                 "type": "string",
                 "format": "uri"
               },
-              "apiKeyEnv": {
-                "description": "Name of the server env var holding the API key. The key itself is never stored.",
+              "apiKeyCredential": {
+                "description": "Name of the credential holding the API key.",
                 "type": "string",
-                "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+                "minLength": 1,
+                "maxLength": 64,
+                "pattern": "^[A-Z][A-Z0-9_]*$"
               },
               "temperature": {
                 "description": "Sampling temperature.",
@@ -7641,7 +7861,7 @@
                   "type": "string",
                   "maxLength": 4000
                 },
-                "description": "Environment variables. Use `${NAME}` to read a secret from the server instead."
+                "description": "Environment variables. Use `${NAME}` to insert a credential instead of a secret."
               }
             },
             "required": [
@@ -7739,7 +7959,7 @@
                         "type": "string",
                         "maxLength": 4000
                       },
-                      "description": "Environment variables. Use `${NAME}` to read a secret from the server instead."
+                      "description": "Environment variables. Use `${NAME}` to insert a credential instead of a secret."
                     }
                   },
                   "required": [
@@ -7779,7 +7999,7 @@
                     },
                     "headers": {
                       "default": {},
-                      "description": "Request headers. Use `${NAME}` to read a token from the server env.",
+                      "description": "Request headers. Use `${NAME}` to insert a credential, e.g. `Bearer ${TOKEN}`.",
                       "type": "object",
                       "propertyNames": {
                         "type": "string",
@@ -7840,6 +8060,100 @@
           }
         },
         "description": "Fields to change on a coding agent; each replaces the stored value as a whole."
+      },
+      "CredentialDto_Output": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "description": "Unique identifier of the credential."
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^[A-Z][A-Z0-9_]*$",
+            "description": "Name agents use to refer to it, unique per user."
+          },
+          "description": {
+            "type": "string",
+            "description": "What the credential is for."
+          },
+          "hint": {
+            "type": "string",
+            "description": "Last few characters of the value, to tell credentials apart."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+            "description": "When the credential was created (ISO 8601)."
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+            "description": "When the value or description last changed (ISO 8601)."
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "description",
+          "hint",
+          "createdAt",
+          "updatedAt"
+        ],
+        "description": "A stored secret. Only its name, description and hint are ever returned.",
+        "additionalProperties": false
+      },
+      "CreateCredentialDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^[A-Z][A-Z0-9_]*$",
+            "description": "Name agents use to refer to it, unique per user."
+          },
+          "value": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20000,
+            "description": "The secret. Stored encrypted; write-only."
+          },
+          "description": {
+            "default": "",
+            "description": "What the credential is for.",
+            "type": "string",
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "name",
+          "value"
+        ],
+        "description": "Fields for storing a credential."
+      },
+      "UpdateCredentialDto": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "description": "New secret value.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20000
+          },
+          "description": {
+            "description": "New description.",
+            "type": "string",
+            "maxLength": 500
+          }
+        },
+        "description": "Replace a credential's value or description."
       }
     }
   }

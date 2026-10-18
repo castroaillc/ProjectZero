@@ -15,6 +15,7 @@ const asBob = (r: request.Test) => r.set("authorization", `Bearer ${bob.token}`)
 
 const minimal = {
   name: "reviewer",
+  identity: "assistant",
   model: { provider: "ollama", model: "gpt-oss:20b" },
   sandbox: { image: "node:24-bookworm" },
 };
@@ -42,7 +43,8 @@ describe("coding agents", () => {
       name: "reviewer",
       description: "",
       systemPrompt: "",
-      identity: {
+      identity: "assistant",
+      persona: {
         avatar: "🤖",
         role: "",
         git: { name: "ProjectZero Agent", email: "agent@projectzero.local" },
@@ -50,6 +52,7 @@ describe("coding agents", () => {
       sandbox: { workdir: "/workspace", network: "bridge", cpus: 2, memoryMb: 4096, env: {} },
       mcpServers: [],
       skills: [],
+      requiredCredentials: [],
     });
     expect(body.tools.map((t: { name: string }) => t.name)).toEqual([
       "bash",
@@ -68,15 +71,16 @@ describe("coding agents", () => {
       name: "full-stack",
       description: "Works on the ProjectZero repo.",
       systemPrompt: "Run the tests before you finish.",
-      identity: {
+      identity: "autonomous",
+      persona: {
         avatar: "🛠️",
         role: "Senior TypeScript engineer",
-        git: { name: "Repo Bot", email: "repo-bot@example.com", tokenEnv: "GITHUB_TOKEN" },
+        git: { name: "Repo Bot", email: "repo-bot@example.com", tokenCredential: "GITHUB_TOKEN" },
       },
       model: {
         provider: "anthropic",
         model: "claude-sonnet-5-5",
-        apiKeyEnv: "ANTHROPIC_API_KEY",
+        apiKeyCredential: "ANTHROPIC_API_KEY",
         maxTokens: 8000,
       },
       sandbox: {
@@ -84,7 +88,7 @@ describe("coding agents", () => {
         repo: { url: "https://github.com/castroaillc/ProjectZero.git", ref: "main" },
         setupCommands: ["corepack enable", "pnpm install"],
         network: "none",
-        env: { CI: "1" },
+        env: { CI: "1", NPM_TOKEN: "${NPM_TOKEN}" },
       },
       tools: [{ name: "bash", approval: "ask" }, { name: "read_file" }],
       mcpServers: [
@@ -106,7 +110,13 @@ describe("coding agents", () => {
       { name: "read_file", approval: "auto" },
     ]);
     expect(created.body.mcpServers[0]).toMatchObject({ approval: "ask", env: {} });
-    expect(created.body.identity).toEqual(full.identity);
+    expect(created.body.persona).toEqual(full.persona);
+    expect(created.body.requiredCredentials).toEqual([
+      "ANTHROPIC_API_KEY",
+      "GITHUB_TOKEN",
+      "LINEAR_TOKEN",
+      "NPM_TOKEN",
+    ]);
 
     const updated = await asAlice(http.patch(`/v1/coding-agents/${id}`))
       .send({ description: "Changed.", skills: [] })
@@ -115,7 +125,8 @@ describe("coding agents", () => {
       description: "Changed.",
       skills: [],
       systemPrompt: full.systemPrompt,
-      identity: full.identity,
+      identity: "autonomous",
+      persona: full.persona,
       tools: created.body.tools,
       mcpServers: created.body.mcpServers,
     });
@@ -135,7 +146,8 @@ describe("coding agents", () => {
       .send({
         ...minimal,
         model: { provider: "openai", model: "gpt-5" },
-        identity: { git: { name: "Bot", email: "not-an-email" } },
+        identity: "robot",
+        persona: { git: { name: "Bot", email: "not-an-email" } },
         sandbox: { image: "not an image", cpus: 99 },
         skills: [
           { name: "Bad Name", description: "x", instructions: "x" },
@@ -146,14 +158,40 @@ describe("coding agents", () => {
       .expect(400);
     expect(res.body.errors.map((e: { path: unknown[] }) => e.path)).toEqual(
       expect.arrayContaining([
-        ["model", "apiKeyEnv"],
-        ["identity", "git", "email"],
+        ["identity"],
+        ["model", "apiKeyCredential"],
+        ["persona", "git", "email"],
         ["sandbox", "image"],
         ["sandbox", "cpus"],
         ["skills", 0, "name"],
         ["skills", 2, "name"],
       ]),
     );
+  });
+
+  it("requires an identity up front and never lets it change", async () => {
+    const { identity: _identity, ...noIdentity } = minimal;
+    const missing = await asAlice(http.post("/v1/coding-agents"))
+      .send({ ...noIdentity, name: "no-identity" })
+      .expect(400);
+    expect(missing.body.errors[0].path).toEqual(["identity"]);
+
+    const { body } = await asAlice(http.post("/v1/coding-agents"))
+      .send({ ...minimal, name: "solo", identity: "autonomous" })
+      .expect(201);
+    const res = await asAlice(http.patch(`/v1/coding-agents/${body.id}`))
+      .send({ identity: "assistant" })
+      .expect(400);
+    expect(res.body.message).toMatch(/can't change/);
+    // Sending the same identity back (e.g. a full-config PATCH) is fine.
+    await asAlice(http.patch(`/v1/coding-agents/${body.id}`))
+      .send({ identity: "autonomous", description: "Nightly dependency bumps." })
+      .expect(200);
+    const stored = await asAlice(http.get(`/v1/coding-agents/${body.id}`)).expect(200);
+    expect(stored.body).toMatchObject({
+      identity: "autonomous",
+      description: "Nightly dependency bumps.",
+    });
   });
 
   it("keeps names unique per user", async () => {
