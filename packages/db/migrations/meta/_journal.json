@@ -15,6 +15,13 @@
       "when": 1792274666300,
       "tag": "0001_glamorous_yellowjacket",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792332573886,
+      "tag": "0002_common_shaman",
+      "breakpoints": true
     }
   ]
 }
