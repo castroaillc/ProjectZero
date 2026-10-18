@@ -6515,6 +6515,71 @@
             "maxLength": 20000,
             "description": "Extra instructions appended to the harness's base prompt."
           },
+          "identity": {
+            "type": "object",
+            "default": {
+              "avatar": "🤖",
+              "role": "",
+              "git": {
+                "name": "ProjectZero Agent",
+                "email": "agent@projectzero.local"
+              }
+            },
+            "properties": {
+              "avatar": {
+                "default": "🤖",
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 16,
+                "description": "Emoji shown next to the agent's messages."
+              },
+              "role": {
+                "default": "",
+                "type": "string",
+                "maxLength": 200,
+                "description": "Who the agent is, e.g. 'Senior TypeScript engineer'. Opens its system prompt."
+              },
+              "git": {
+                "default": {
+                  "name": "ProjectZero Agent",
+                  "email": "agent@projectzero.local"
+                },
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100,
+                    "description": "Commit author name."
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$",
+                    "description": "Commit author email."
+                  },
+                  "tokenEnv": {
+                    "description": "Server env var with a token for pushing (e.g. a GitHub PAT). Never stored.",
+                    "type": "string",
+                    "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+                  }
+                },
+                "required": [
+                  "name",
+                  "email"
+                ],
+                "additionalProperties": false,
+                "description": "Who the agent's commits are attributed to inside the sandbox."
+              }
+            },
+            "required": [
+              "avatar",
+              "role",
+              "git"
+            ],
+            "additionalProperties": false,
+            "description": "How the agent presents itself and who its work is attributed to."
+          },
           "model": {
             "type": "object",
             "properties": {
@@ -6913,6 +6978,7 @@
           "name",
           "description",
           "systemPrompt",
+          "identity",
           "model",
           "sandbox",
           "tools",
@@ -6921,7 +6987,7 @@
           "createdAt",
           "updatedAt"
         ],
-        "description": "A coding agent: model, sandbox, tools, MCP servers and skills.",
+        "description": "A coding agent: identity, model, sandbox, tools, MCP servers and skills.",
         "additionalProperties": false
       },
       "CreateCodingAgentDto": {
@@ -6944,6 +7010,64 @@
             "type": "string",
             "maxLength": 20000,
             "description": "Extra instructions appended to the harness's base prompt."
+          },
+          "identity": {
+            "default": {
+              "avatar": "🤖",
+              "role": "",
+              "git": {
+                "name": "ProjectZero Agent",
+                "email": "agent@projectzero.local"
+              }
+            },
+            "type": "object",
+            "properties": {
+              "avatar": {
+                "default": "🤖",
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 16,
+                "description": "Emoji shown next to the agent's messages."
+              },
+              "role": {
+                "default": "",
+                "type": "string",
+                "maxLength": 200,
+                "description": "Who the agent is, e.g. 'Senior TypeScript engineer'. Opens its system prompt."
+              },
+              "git": {
+                "default": {
+                  "name": "ProjectZero Agent",
+                  "email": "agent@projectzero.local"
+                },
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100,
+                    "description": "Commit author name."
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$",
+                    "description": "Commit author email."
+                  },
+                  "tokenEnv": {
+                    "description": "Server env var with a token for pushing (e.g. a GitHub PAT). Never stored.",
+                    "type": "string",
+                    "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+                  }
+                },
+                "required": [
+                  "name",
+                  "email"
+                ],
+                "description": "Who the agent's commits are attributed to inside the sandbox."
+              }
+            },
+            "description": "How the agent presents itself and who its work is attributed to."
           },
           "model": {
             "type": "object",
@@ -7331,6 +7455,56 @@
             "type": "string",
             "maxLength": 20000,
             "description": "Extra instructions appended to the harness's base prompt."
+          },
+          "identity": {
+            "type": "object",
+            "properties": {
+              "avatar": {
+                "default": "🤖",
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 16,
+                "description": "Emoji shown next to the agent's messages."
+              },
+              "role": {
+                "default": "",
+                "type": "string",
+                "maxLength": 200,
+                "description": "Who the agent is, e.g. 'Senior TypeScript engineer'. Opens its system prompt."
+              },
+              "git": {
+                "default": {
+                  "name": "ProjectZero Agent",
+                  "email": "agent@projectzero.local"
+                },
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100,
+                    "description": "Commit author name."
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$",
+                    "description": "Commit author email."
+                  },
+                  "tokenEnv": {
+                    "description": "Server env var with a token for pushing (e.g. a GitHub PAT). Never stored.",
+                    "type": "string",
+                    "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+                  }
+                },
+                "required": [
+                  "name",
+                  "email"
+                ],
+                "description": "Who the agent's commits are attributed to inside the sandbox."
+              }
+            },
+            "description": "How the agent presents itself and who its work is attributed to."
           },
           "model": {
             "type": "object",

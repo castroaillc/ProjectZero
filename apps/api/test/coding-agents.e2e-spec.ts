@@ -42,6 +42,11 @@ describe("coding agents", () => {
       name: "reviewer",
       description: "",
       systemPrompt: "",
+      identity: {
+        avatar: "🤖",
+        role: "",
+        git: { name: "ProjectZero Agent", email: "agent@projectzero.local" },
+      },
       sandbox: { workdir: "/workspace", network: "bridge", cpus: 2, memoryMb: 4096, env: {} },
       mcpServers: [],
       skills: [],
@@ -63,6 +68,11 @@ describe("coding agents", () => {
       name: "full-stack",
       description: "Works on the ProjectZero repo.",
       systemPrompt: "Run the tests before you finish.",
+      identity: {
+        avatar: "🛠️",
+        role: "Senior TypeScript engineer",
+        git: { name: "Repo Bot", email: "repo-bot@example.com", tokenEnv: "GITHUB_TOKEN" },
+      },
       model: {
         provider: "anthropic",
         model: "claude-sonnet-5-5",
@@ -96,6 +106,7 @@ describe("coding agents", () => {
       { name: "read_file", approval: "auto" },
     ]);
     expect(created.body.mcpServers[0]).toMatchObject({ approval: "ask", env: {} });
+    expect(created.body.identity).toEqual(full.identity);
 
     const updated = await asAlice(http.patch(`/v1/coding-agents/${id}`))
       .send({ description: "Changed.", skills: [] })
@@ -104,6 +115,7 @@ describe("coding agents", () => {
       description: "Changed.",
       skills: [],
       systemPrompt: full.systemPrompt,
+      identity: full.identity,
       tools: created.body.tools,
       mcpServers: created.body.mcpServers,
     });
@@ -123,6 +135,7 @@ describe("coding agents", () => {
       .send({
         ...minimal,
         model: { provider: "openai", model: "gpt-5" },
+        identity: { git: { name: "Bot", email: "not-an-email" } },
         sandbox: { image: "not an image", cpus: 99 },
         skills: [
           { name: "Bad Name", description: "x", instructions: "x" },
@@ -134,6 +147,7 @@ describe("coding agents", () => {
     expect(res.body.errors.map((e: { path: unknown[] }) => e.path)).toEqual(
       expect.arrayContaining([
         ["model", "apiKeyEnv"],
+        ["identity", "git", "email"],
         ["sandbox", "image"],
         ["sandbox", "cpus"],
         ["skills", 0, "name"],
